@@ -25,3 +25,6 @@ fsspec==2022.7.1
 gcsfs==2022.7.1
 
 protobuf~=3.19.0
+
+# for testing
+pytest==7.2.0

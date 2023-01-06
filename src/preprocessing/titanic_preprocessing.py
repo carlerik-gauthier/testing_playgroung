@@ -40,18 +40,23 @@ def women_children_first_rule(df: DataFrame,
 def preprocess(df: DataFrame,
                age_col: str,
                gender_col: str,
-               fixed_columns: list
+               fixed_columns: list,
+               fill_na_default_value: float = 29.6,
+               female_gender_value: str = 'female',
+               children_women_first_rule_column_name: str = 'women_children_first_rule_eligible',
+               children_women_first_rule_scale: int = 5,
+               dummy_scale: int = 4
                ) -> DataFrame:
     # a small analysis showed that the avg age is around 29.6
     dg = deepcopy(df)
-    dg = fill_na(df=dg, default_value=29.6, col=age_col)
+    dg = fill_na(df=dg, default_value=fill_na_default_value, col=age_col)
     dg = women_children_first_rule(df=dg,
                                    age_col=age_col,
                                    gender_col=gender_col,
-                                   female_value='female',
-                                   new_col_name='women_children_first_rule_eligible',
-                                   scale=5)
+                                   female_value=female_gender_value,
+                                   new_col_name=children_women_first_rule_column_name,
+                                   scale=children_women_first_rule_scale)
     gender_values = list(df[gender_col].sort_values(ascending=True).unique())
-    dg = dummify_categorical(df=dg, col=gender_col, scale=4)
+    dg = dummify_categorical(df=dg, col=gender_col, scale=dummy_scale)
 
-    return dg[fixed_columns + ['women_children_first_rule_eligible'] + gender_values[:-1]]
+    return dg[fixed_columns + [children_women_first_rule_column_name] + gender_values[:-1]]

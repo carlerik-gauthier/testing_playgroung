@@ -19,7 +19,7 @@ from google.oauth2 import service_account
 
 # custom modules
 from gcp_interface.storage_interface import StorageInterface
-from preprocessing.titanic_preprocess import preprocess
+from preprocessing.titanic_preprocessing import preprocess
 
 warnings.filterwarnings("ignore", """Your application has authenticated using
 end user credentials""")

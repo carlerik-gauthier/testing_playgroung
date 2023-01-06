@@ -3,7 +3,7 @@
 # Objective
 
 The purpose of this repo is to experiment testing with an ML project. 
-I'll be using pytest
+I'll be using **pytest**.
 
 # Data and Model
 
@@ -13,6 +13,7 @@ The model is going to be a random forest. Note that no optimization is perform, 
 
 # Reference
 
+unittest + nose2
 Unit Testing for Data Science with Python
 https://towardsdatascience.com/unit-testing-for-data-science-with-python-16dfdcfe3232 
 
@@ -22,6 +23,7 @@ https://towardsdatascience.com/how-to-develop-and-test-your-google-cloud-functio
 How To Easily And Confidently Implement Unit Tests In Python
 https://towardsdatascience.com/how-to-easily-and-confidently-implement-unit-tests-in-python-cad48d91ab74
 
+THIS ONE
 Testing features with pytest
 https://towardsdatascience.com/testing-features-with-pytest-82765a13a0e7
 
@@ -31,11 +33,20 @@ https://towardsdatascience.com/how-to-do-unit-testing-in-dbt-cb5fb660fbd8
 Unit Testing with Mocking in 10 Minutes
 https://towardsdatascience.com/unit-testing-with-mocking-in-10-minutes-e28feb7e530
 
+THIS ONE
 An Elegant Guide to Testing Your Data Science Pipeline Using Pytest
 https://towardsdatascience.com/an-elegant-guide-to-testing-your-data-science-pipeline-using-pytest-4859b0c32591
 
+THIS ONE
 Pytest for Data Scientists
 https://towardsdatascience.com/pytest-for-data-scientists-2990319e55e6
 
 Pytest with Marking, Mocking, and Fixtures in 10 Minutes
 https://towardsdatascience.com/pytest-with-marking-mocking-and-fixtures-in-10-minutes-678d7ccd2f70
+
+Pytest Tutorial
+https://www.tutorialspoint.com/pytest/pytest_environment_setup.html
+
+THIS ONE
+13 Tips for using PyTest
+https://towardsdatascience.com/13-tips-for-using-pytest-5341e3366d2d
