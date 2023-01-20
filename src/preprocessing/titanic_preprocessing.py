@@ -33,7 +33,11 @@ def women_children_first_rule(df: DataFrame,
                               scale: int = 1
                               ) -> DataFrame:
     dg = deepcopy(df)
-    dg[new_col_name] = dg[[age_col, gender_col]].apply(lambda r: scale*int(r[0] < 18 or r[1] == female_value), axis=1)
+    if age_col not in dg.columns or gender_col not in dg.columns:
+        dg[new_col_name] = [0]*len(dg)
+    else:
+        dg[new_col_name] = dg[[age_col, gender_col]].apply(lambda r: scale*int(r[0] < 18 or r[1] == female_value),
+                                                           axis=1)
     return dg
 
 
