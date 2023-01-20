@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import conftest
 from pandas import DataFrame, Series
@@ -21,21 +22,25 @@ def test_dummify_categorical(input_df: DataFrame,
 
     assert isinstance(output_df, DataFrame)
     assert id(output_df) != id(input_df)
-    # TODO correct wrt to expected_result_metadata
-    """
-    dummy_columns = [c for c in output_df if c.startswith(f'{prefix}{prefix_sep}')]
-    assert len(dummy_columns) == input_df[col].nunique()
+    assert output_df.shape[0]==input_df.shape[0]
+
+    # Metadata from expected outcome is returned as the tuple
+    # (expected prefix column, unique values, row indices per values, unchanged column list)
+    expected_prefix, unique_values, row_indices, unchanged_columns = expected_result_metadata
+    dummy_columns = [c for c in output_df if c.startswith(expected_prefix)]
+    assert len(dummy_columns) == len(unique_values)
+    expected_dummy_colums = [f'{expected_prefix}{v}' for v in unique_values]
+    col_intersection = set(expected_dummy_colums).intersection(set(dummy_columns))
+    assert len(col_intersection) == len(unique_values)
     assert col not in output_df.columns
-    for c in output_df:
-        if c in dummy_columns:
-            assert 0 in set(output_df[c])
-            assert scale in set(output_df[c])
-        else:
-            assert (sum([input_df[col][i] is None or output_df[col][i] == pytest.approx(input_df[col][i])
-                         for i in range(len(input_df))]
-                        ) == len(input_df)
-                    )
-    """
+    for c in unchanged_columns:
+        assert c in output_df.columns
+
+    for v, indices in zip(unique_values, row_indices):
+        dummy_col = f'{expected_prefix}{v}'
+        expected_col = np.zeros(output_df.shape[0])
+        expected_col[indices] = scale
+        assert output_df[dummy_col].to_numpy() == expected_col
 
 
 @pytest.mark.parametrize('input_df, col, default_value, expected_result',
@@ -48,6 +53,7 @@ def test_fill_na(input_df: DataFrame,
 
     # output_df is expected to be a dataframe
     assert isinstance(output_df, DataFrame)
+    assert output_df.shape[0] == input_df.shape[0]
     # ids object shall not be the same
     assert(id(input_df) != id(output_df))
     # the columns' name in output shall match those from input
@@ -85,6 +91,7 @@ def test_women_children_first_rule(input_df: DataFrame,
                                              scale=scale)
     # output_df is expected to be a dataframe
     assert isinstance(output_df, DataFrame)
+    assert output_df.shape[0] == input_df.shape[0]
     # ids object shall not be the same
     assert id(output_df) != id(input_df)
     # new_col_name must be a column from output_df

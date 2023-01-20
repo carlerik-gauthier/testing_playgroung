@@ -46,7 +46,7 @@ class TitanicPreprocessingDataTest:
         input_data_df = pd.DataFrame(data={'A': ['a', 'b', 'a', 'a', 'a'],
                                            'B': ['b', 'a', 'c', 'c', np.nan],
                                            'C': [1, np.nan, 2, 3, -7.2]})
-        # the expected is returned as the tuple
+        # Metadata from expected outcome is returned as the tuple
         # (expected prefix column, unique values, row indices per values, unchanged column list)
         checks = [(input_data_df, 'A', 'dummy', '_', 1, ('dummy_', ['a', 'b'], [[0, 2, 3, 4], [1]], ['B', 'C'])),
                   (input_data_df, 'B', 'dummy', '_', 1, ('dummy_', ['a', 'b', 'c'], [[1], [0], [2, 3]], ['A', 'C'])),
