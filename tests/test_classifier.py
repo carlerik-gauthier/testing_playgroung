@@ -1,9 +1,11 @@
 import pytest
+import pytest_mock
+# from pytest_mock import mocker
 from src.models import classifier as cls
 
 
 @pytest.skip
-def test_get_data_from_storage():
+def test_get_data_from_storage():  # (mocker: pytest_mock.mocker):
     pass
 
 

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 import conftest
-from pandas import DataFrame, Series
+from pandas import DataFrame, Series, testing
 from typing import Union
 from src.preprocessing import titanic_preprocessing as tp
 
@@ -22,7 +22,7 @@ def test_dummify_categorical(input_df: DataFrame,
 
     assert isinstance(output_df, DataFrame)
     assert id(output_df) != id(input_df)
-    assert output_df.shape[0]==input_df.shape[0]
+    assert output_df.shape[0] == input_df.shape[0]
 
     # Metadata from expected outcome is returned as the tuple
     # (expected prefix column, unique values, row indices per values, unchanged column list)
@@ -40,7 +40,7 @@ def test_dummify_categorical(input_df: DataFrame,
         dummy_col = f'{expected_prefix}{v}'
         expected_col = np.zeros(output_df.shape[0])
         expected_col[indices] = scale
-        assert output_df[dummy_col].to_numpy() == expected_col
+        assert output_df[dummy_col].to_numpy() == pytest.approx(expected_col)
 
 
 @pytest.mark.parametrize('input_df, col, default_value, expected_result',
@@ -64,6 +64,7 @@ def test_fill_na(input_df: DataFrame,
     for c in input_df.columns:
         if c == col:
             assert(output_df[col] == pytest.approx(expected_result))
+            assert testing.assert_series_equal(left=output_df[col], right=expected_result)
         else:
             # other columns shall remain unchanged
             assert c in input_df.columns
@@ -99,7 +100,8 @@ def test_women_children_first_rule(input_df: DataFrame,
 
     for c in output_df.columns:
         if c == new_col_name:
-            assert(output_df[new_col_name] == expected_result)
+            # assert(output_df[new_col_name] == expected_result)
+            testing.assert_series_equal(left=output_df[new_col_name], right=expected_result)
         else:
             # other columns shall remain unchanged
             assert c in input_df.columns
@@ -120,8 +122,28 @@ def test_preprocess(input_df: DataFrame,
                     fill_na_default_value: float,
                     female_gender_value: str,
                     children_women_first_rule_column_name: str,
-                    children_women_first_rule_scale,
+                    children_women_first_rule_scale: int,
                     dummy_scale: int,
                     expected_result: DataFrame
                     ):
-    pass
+    output_df = tp.preprocess(df=input_df,
+                              age_col=age_col,
+                              gender_col=gender_col,
+                              fixed_columns=fixed_columns,
+                              fill_na_default_value=fill_na_default_value,
+                              female_gender_value=female_gender_value,
+                              children_women_first_rule_column_name=children_women_first_rule_column_name,
+                              children_women_first_rule_scale=children_women_first_rule_scale,
+                              dummy_scale=dummy_scale)
+    # id checks
+    assert id(output_df) != id(input_df)
+    # size checks
+    assert output_df.size == expected_result.size
+    # columns checks
+    assert len(set(output_df.columns).intersection(set(expected_result.columns))) == len(expected_result.columns)
+    # content checks
+    for col in output_df.columns:
+        assert testing.assert_series_equal(left=output_df[col], right=expected_result[col], check_dtype=False)
+
+    # directly on dataframe
+    assert testing.assert_frame_equal(left=output_df, right=expected_result)

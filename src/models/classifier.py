@@ -49,7 +49,7 @@ def get_rf_classification_model(train_data: pd.DataFrame,
                                 n_splits: int = 5,
                                 n_estimators: int = 10,
                                 seed: int = 123
-                                ):
+                                ) -> RandomForestClassifier:
     # reset indices for safety purpose
     train_data.reset_index(drop=True, inplace=True)
     # Random Forest Classifier model init
