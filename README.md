@@ -50,3 +50,14 @@ https://www.tutorialspoint.com/pytest/pytest_environment_setup.html
 THIS ONE
 13 Tips for using PyTest
 https://towardsdatascience.com/13-tips-for-using-pytest-5341e3366d2d
+
+PyTest for Machine Learning — a simple example-based tutorial
+https://towardsdatascience.com/pytest-for-machine-learning-a-simple-example-based-tutorial-a3df3c58cf8
+
+
+https://www.tutorialspoint.com/pytest/index.htm
+
+https://lyz-code.github.io/blue-book/coding/python/pytest/
+https://docs.pytest.org/en/6.2.x/logging.html
+https://docs.pytest.org/en/7.2.x/getting-started.html
+https://docs.pytest.org/en/6.2.x/fixture.html#fixture-availability

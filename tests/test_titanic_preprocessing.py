@@ -1,13 +1,13 @@
 import numpy as np
 import pytest
-import conftest
+# import conftest
 from pandas import DataFrame, Series, testing
 from typing import Union
 from src.preprocessing import titanic_preprocessing as tp
 
 
 @pytest.mark.parametrize('input_df, col, prefix, prefix_sep, scale, expected_result_metadata',
-                         conftest.TitanicPreprocessingDataTest.data_dummify_categorical)
+                         TitanicPreprocessingDataTest.data_dummify_categorical)
 def test_dummify_categorical(input_df: DataFrame,
                              col: str,
                              prefix: str,
@@ -44,7 +44,7 @@ def test_dummify_categorical(input_df: DataFrame,
 
 
 @pytest.mark.parametrize('input_df, col, default_value, expected_result',
-                         conftest.TitanicPreprocessingDataTest.data_fill_na)
+                         TitanicPreprocessingDataTest.data_fill_na)
 def test_fill_na(input_df: DataFrame,
                  col: str,
                  default_value: Union[str, float, int],
@@ -75,7 +75,7 @@ def test_fill_na(input_df: DataFrame,
 
 
 @pytest.mark.parametrize('input_df, age_col, gender_col, female_value, new_col_name, scale, expected_result',
-                         conftest.TitanicPreprocessingDataTest.data_women_children_first_rule)
+                         TitanicPreprocessingDataTest.data_women_children_first_rule)
 def test_women_children_first_rule(input_df: DataFrame,
                                    age_col: str,
                                    gender_col: str,
@@ -110,11 +110,10 @@ def test_women_children_first_rule(input_df: DataFrame,
                    )
 
 
-@pytest.skip
 @pytest.mark.parametrize(
     """input_df, age_col, gender_col, fixed_columns, fill_na_default_value, female_gender_value, 
     children_women_first_rule_column_name, children_women_first_rule_scale, dummy_scale, expected_result""",
-    conftest.TitanicPreprocessingDataTest.data_preprocess)
+    TitanicPreprocessingDataTest.data_preprocess)
 def test_preprocess(input_df: DataFrame,
                     age_col: str,
                     gender_col: str,

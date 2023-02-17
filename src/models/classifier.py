@@ -1,11 +1,11 @@
 """
 This script contains model to be trained
 """
-import argparse
+# import argparse
 import os
 import logging
 import warnings
-import json
+# import json
 import pickle
 
 import numpy as np
@@ -14,8 +14,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error as mse
 
-import google.auth as ga
-from google.oauth2 import service_account
+# import google.auth as ga
+# from google.oauth2 import service_account
 
 # custom modules
 from gcp_interface.storage_interface import StorageInterface
@@ -38,7 +38,7 @@ def get_data_from_storage(gs_interface: StorageInterface,
     data = gs_interface.storage_to_dataframe(bucket_name=bucket_name,
                                              data_name=data_name,
                                              gs_dir_path=gs_dir_path)
-    data.dropna(inplace=True)
+    # data.dropna(inplace=True)
     # data['product_code'] = data['product_code'].astype('int32').astype('str')
     return data
 
@@ -83,9 +83,9 @@ def get_titanic_survival_prediction(model: RandomForestClassifier,
                                     data_configuration: dict
                                     ) -> pd.DataFrame:
     # preprocess
-    feat_dict = data_configuration.get('features')
-    age_col = feat_dict.get('age_col')
-    gender_col = feat_dict.get('gender_col')
+    feat_dict = data_configuration.get('features', dict())
+    age_col = feat_dict.get('age_col', '')
+    gender_col = feat_dict.get('gender_col', '')
     data_df = preprocess(df=application_data,
                          age_col=age_col,
                          gender_col=gender_col,
@@ -124,10 +124,10 @@ def train_model_in_local(gs_interface: StorageInterface,
         gs_dir_path=gs_dir_path)
 
     # preprocess
-    feat_dict = data_configuration.get('features')
-    target_col = data_configuration.get('target_col')
-    age_col = feat_dict.get('age_col')
-    gender_col = feat_dict.get('gender_col')
+    feat_dict = data_configuration.get('features', dict())
+    target_col = data_configuration.get('target_col', '')
+    age_col = feat_dict.get('age_col', '')
+    gender_col = feat_dict.get('gender_col', '')
     data_df = preprocess(df=train_data,
                          age_col=age_col,
                          gender_col=gender_col,
@@ -158,6 +158,23 @@ def train_model_in_local(gs_interface: StorageInterface,
                                   )
 
 
+def retrieve_saved_model(gs_interface: StorageInterface,
+                         bucket_name: str,
+                         gs_dir_path: str,
+                         local_dir_path: str,
+                         model_name: str):
+    filename = model_name + '.pickle'
+    # Storage to local
+    gs_interface.storage_to_local(data_prefix=filename,
+                                  bucket_name=bucket_name,
+                                  source=gs_dir_path,
+                                  destination=local_dir_path
+                                  )
+    # load the model from disk
+    model = pickle.load(open(os.path.join(local_dir_path, filename), 'rb'))
+    return model
+
+
 def predict_in_local(gs_interface: StorageInterface,
                      bucket_name: str,
                      gs_dir_path: str,
@@ -173,15 +190,11 @@ def predict_in_local(gs_interface: StorageInterface,
         gs_dir_path=gs_dir_path)
 
     logger.info(f"Retrieving model from {model_name}")
-    filename = model_name + '.pickle'
-    # Storage to local
-    gs_interface.storage_to_local(data_prefix=filename,
-                                  bucket_name=bucket_name,
-                                  source=gs_dir_path,
-                                  destination=local_dir_path
-                                  )
-    # load the model from disk
-    model = pickle.load(open(os.path.join(local_dir_path, filename), 'rb'))
+    model = retrieve_saved_model(gs_interface=gs_interface,
+                                 bucket_name=bucket_name,
+                                 gs_dir_path=gs_dir_path,
+                                 local_dir_path=local_dir_path,
+                                 model_name=model_name)
 
     # get prediction
     predictions = get_titanic_survival_prediction(model=model,
