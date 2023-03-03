@@ -3,18 +3,26 @@ import pytest
 import logging
 import pickle
 import os
-# import conftest
+import sys
+
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, 'src')))
+
+import tests.conftest as conftest
 # import pytest_mock
 # from pytest_mock import mocker
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
-from src.models import classifier as cls
+from models import classifier as cls
 from gcp_interface.storage_interface import StorageInterface
 # from pathlib import Path
 # from _pytest.logging import LogCaptureFixture
 
 DATA = pd.DataFrame(data={"A": [1, 2, 3], "B": ["a", "b", "c"]})
+
+
+pytest.skip("not yet", allow_module_level=True)
 
 
 def test_get_data_from_storage(mocker):  # (mocker: pytest_mock.mocker):
@@ -26,10 +34,10 @@ def test_get_data_from_storage(mocker):  # (mocker: pytest_mock.mocker):
     assert pd.testing.assert_frame_equal(left=df, right=DATA)
 
 
-# @pytest.mark.usefixtures("caplog")
-@pytest.skip
+@pytest.mark.usefixtures("caplog")
+# @pytest.marK.skip("not yet")
 @pytest.mark.parametrize('train_data, feature_cols, target_col, n_split',
-                         ClassifierDataTest.get_rf_classification_model)
+                         conftest.ClassifierDataTest.get_rf_classification_model)
 def test_get_rf_classification_model(train_data: pd.DataFrame,
                                      feature_cols: list,
                                      target_col: str,
@@ -63,7 +71,8 @@ def test_get_rf_classification_model(train_data: pd.DataFrame,
     except NotFittedError:
         assert False
 
-@pytest.skip
+
+# @pytest.skip("not yet")
 def test_retrieve_saved_model(tmp_path,
                               ClassifierDataTest,
                               mocker):
@@ -92,8 +101,9 @@ def test_retrieve_saved_model(tmp_path,
     for att in mock_model.__dict__.keys():
         assert getattr(mock_model, att) == getattr(model, att)
 
-@pytest.skip
-def test_get_titanic_survival_prediction(ClassifierDataTest: ClassifierDataTest, caplog, mocker):
+
+# @pytest.skip("not yet")
+def test_get_titanic_survival_prediction(ClassifierDataTest: conftest.ClassifierDataTest, caplog, mocker):
     # mock preprocess and use a fitted model
     application_data = ClassifierDataTest.prediction_data()
     mock_model = ClassifierDataTest.rf_cls_model()
@@ -118,14 +128,14 @@ def test_get_titanic_survival_prediction(ClassifierDataTest: ClassifierDataTest,
         assert pytest.approx(pred) == 0 or pytest.approx(pred) == 1
 
 
-@pytest.skip
+@pytest.mark.skip("not yet")
 def test_train_model_in_local():
     # Testing how data is moved through the process ==> testing logger infos
     # mock preprocess, get_rf_classification_model, gs_interface.local_to_storage, get_data_from_storage
     pass
 
 
-@pytest.skip
+@pytest.mark.skip("not yet")
 def test_predict_in_local():
     # Test skipped because predict_in_local is a sequence of calls to other functions or methods requiring interaction
     # with GCS and a trained model

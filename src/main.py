@@ -2,13 +2,9 @@
 import argparse
 import logging
 import os
-import sys
 import yaml
-import json
 import warnings
-import time
 from datetime import datetime
-from functools import reduce
 
 # Google related packages
 import google.auth as ga

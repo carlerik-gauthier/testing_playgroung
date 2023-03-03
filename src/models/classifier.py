@@ -16,7 +16,12 @@ from sklearn.metrics import mean_squared_error as mse
 
 # import google.auth as ga
 # from google.oauth2 import service_account
+LOGLEVEL = os.environ.get("LOGLEVEL", "INFO").upper()
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
+                    level=LOGLEVEL)
+logger = logging.getLogger()
 
+logger.info(os.path.join(os.path.dirname(__file__)))
 # custom modules
 from gcp_interface.storage_interface import StorageInterface
 from preprocessing.titanic_preprocessing import preprocess

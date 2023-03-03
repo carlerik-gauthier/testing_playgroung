@@ -54,10 +54,29 @@ https://towardsdatascience.com/13-tips-for-using-pytest-5341e3366d2d
 PyTest for Machine Learning — a simple example-based tutorial
 https://towardsdatascience.com/pytest-for-machine-learning-a-simple-example-based-tutorial-a3df3c58cf8
 
+Testing Best Practices for Machine Learning Libraries
+https://towardsdatascience.com/testing-best-practices-for-machine-learning-libraries-41b7d0362c95
+
+How to get directory with test from fixture in conftest.py
+https://medium.com/opsops/how-to-get-directory-with-test-from-fixture-in-conftest-py-275b566fcc00
+
+Pytest: How to use fixtures as arguments in parametrize
+https://engineeringfordatascience.com/posts/pytest_fixtures_with_parameterize/
 
 https://www.tutorialspoint.com/pytest/index.htm
 
 https://lyz-code.github.io/blue-book/coding/python/pytest/
 https://docs.pytest.org/en/6.2.x/logging.html
+https://docs.pytest.org/en/7.1.x/how-to/fixtures.html
 https://docs.pytest.org/en/7.2.x/getting-started.html
-https://docs.pytest.org/en/6.2.x/fixture.html#fixture-availability
+https://docs.pytest.org/en/6.2.x/fixture.html
+
+https://stackoverflow.com/questions/34466027/in-pytest-what-is-the-use-of-conftest-py-files
+
+
+A useful tip when figuring out what's going wrong is to have some .py file to experiment. Of course, this file should 
+not be Git-ed
+
+It's useful for 2 reasons :
+    - correcting the tested function or extend its ability to handle unexpected cases
+    - correcting the test itself. After all, it is code :) . It might as well be a coding issue as a logical one 

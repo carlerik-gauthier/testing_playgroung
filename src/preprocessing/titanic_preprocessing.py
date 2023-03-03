@@ -11,7 +11,7 @@ def dummify_categorical(df: DataFrame,
                         ) -> DataFrame:
     values = df[col].unique()
     df_dummify = get_dummies(df, prefix=prefix, prefix_sep=prefix_sep, columns=[col])
-    new_cols = [f'{prefix}{prefix_sep}{val}' for val in values]
+    new_cols = [f'{prefix}{prefix_sep}{val}' for val in values if val == val]
     df_dummify[new_cols] = df_dummify[new_cols].mul(scale)
     return df_dummify
 
@@ -35,9 +35,12 @@ def women_children_first_rule(df: DataFrame,
     dg = deepcopy(df)
     if age_col not in dg.columns or gender_col not in dg.columns:
         dg[new_col_name] = [0]*len(dg)
+    elif dg[age_col].dtypes not in (int, float):
+        dg[new_col_name] = [0]*len(dg)
     else:
-        dg[new_col_name] = dg[[age_col, gender_col]].apply(lambda r: scale*int(r[0] < 18 or r[1] == female_value),
-                                                           axis=1)
+        dg[new_col_name] = dg[[age_col, gender_col]].apply(
+            lambda r: scale*int(r[0] < 18 or r[1] == female_value) if type(r[0]) is int or type(r[0]) is float else 0,
+            axis=1)
     return dg
 
 
