@@ -8,7 +8,7 @@ import sys
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, 'src')))
 
-import tests.conftest as conftest
+# import tests.conftest as conftest
 # import pytest_mock
 # from pytest_mock import mocker
 from sklearn.ensemble import RandomForestClassifier
@@ -21,40 +21,48 @@ from gcp_interface.storage_interface import StorageInterface
 
 DATA = pd.DataFrame(data={"A": [1, 2, 3], "B": ["a", "b", "c"]})
 
+import logging
+import warnings
+warnings.filterwarnings("ignore", """Your application has authenticated using
+end user credentials""")
+LOGLEVEL = os.environ.get("LOGLEVEL", "INFO").upper()
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
+                    level=LOGLEVEL)
+logger = logging.getLogger()
 
-pytest.skip("not yet", allow_module_level=True)
+
+# pytest.skip("not yet", allow_module_level=True)
 
 
 def test_get_data_from_storage(mocker):  # (mocker: pytest_mock.mocker):
-    mocker.patch('src.gcp_interface.storage_interface.StorageInterface.storage_to_dataframe', return_value=DATA)
+    mocker.patch('gcp_interface.storage_interface.StorageInterface.storage_to_dataframe', return_value=DATA)
     df = cls.get_data_from_storage(gs_interface=StorageInterface(project_name='project'),
                                    data_name='toto',
                                    bucket_name="bucket")
     assert isinstance(df, pd.DataFrame)
-    assert pd.testing.assert_frame_equal(left=df, right=DATA)
+    pd.testing.assert_frame_equal(left=df, right=DATA)
 
 
 @pytest.mark.usefixtures("caplog")
-# @pytest.marK.skip("not yet")
-@pytest.mark.parametrize('train_data, feature_cols, target_col, n_split',
-                         conftest.ClassifierDataTest.get_rf_classification_model)
-def test_get_rf_classification_model(train_data: pd.DataFrame,
-                                     feature_cols: list,
-                                     target_col: str,
-                                     n_split: int,
+@pytest.mark.parametrize('n_split', [2, 5])
+def test_get_rf_classification_model(n_split,
+                                     get_rf_classification_model_training_data,
                                      caplog
                                      ):
+    logger.info(get_rf_classification_model_training_data)
+    # train_data, feature_cols, target_col = get_rf_classification_model_training_data
     caplog.set_level(logging.INFO)
-    if n_split != 5:
-        model = cls.get_rf_classification_model(train_data=train_data,
-                                                feature_cols=feature_cols,
-                                                target_col=target_col
+    if n_split == 5:
+        # 5 is the default value
+        model = cls.get_rf_classification_model(train_data=get_rf_classification_model_training_data[0],
+                                                feature_cols=get_rf_classification_model_training_data[1],
+                                                target_col=get_rf_classification_model_training_data[2]
                                                 )
     else:
-        model = cls.get_rf_classification_model(train_data=train_data,
-                                                feature_cols=feature_cols,
-                                                target_col=target_col,
-                                                n_splits=n_split,
+        model = cls.get_rf_classification_model(train_data=get_rf_classification_model_training_data[0],
+                                                feature_cols=get_rf_classification_model_training_data[1],
+                                                target_col=get_rf_classification_model_training_data[2],
+                                                n_splits=n_split
                                                 )
 
     # logger check for nmb of split
@@ -72,21 +80,23 @@ def test_get_rf_classification_model(train_data: pd.DataFrame,
         assert False
 
 
-# @pytest.skip("not yet")
 def test_retrieve_saved_model(tmp_path,
-                              ClassifierDataTest,
+                              get_classifier_model,
                               mocker):
-    tmp_path.mkdir()
+
+    tmp_path.mkdir(exist_ok=True)  # creates a Pathlib object
     # mock call to gs_interface.storage_to_local
-    mock_model = ClassifierDataTest.rf_cls_model()
+    mock_model = get_classifier_model
     model_name = "my_rf_classifier"
-    mocker.patch('src.gcp_interface.storage_interface.StorageInterface.storage_to_local',
-                 return_value=pickle.dump(mock_model, open(os.path.join(tmp_path.name, model_name + '.pickle'), 'wb')))
+    mocker.patch('gcp_interface.storage_interface.StorageInterface.storage_to_local',
+                 return_value=pickle.dump(mock_model,
+                                          open(os.path.join(tmp_path.absolute(), model_name + '.pickle'), 'wb')))
     model = cls.retrieve_saved_model(gs_interface=StorageInterface(project_name='project'),
                                      bucket_name='bucket',
                                      gs_dir_path='gs_dir_path',
-                                     local_dir_path=tmp_path.name,
+                                     local_dir_path=tmp_path.absolute().as_posix(),
                                      model_name=model_name)
+    # see Pathlib library : as_posix() changes a Pathlib object to a string
     assert isinstance(model, RandomForestClassifier)
     # check if model is fitted
     try:
@@ -99,11 +109,14 @@ def test_retrieve_saved_model(tmp_path,
            len(set(mock_model.__dict__.keys()))
 
     for att in mock_model.__dict__.keys():
+        # TODO : check from here
+        logger.info(f"mock : {getattr(mock_model, att)}")
+        logger.info(f" model : {getattr(model, att)}")
         assert getattr(mock_model, att) == getattr(model, att)
 
 
-# @pytest.skip("not yet")
-def test_get_titanic_survival_prediction(ClassifierDataTest: conftest.ClassifierDataTest, caplog, mocker):
+@pytest.mark.skip("not yet")
+def test_get_titanic_survival_prediction(ClassifierDataTest, caplog, mocker):
     # mock preprocess and use a fitted model
     application_data = ClassifierDataTest.prediction_data()
     mock_model = ClassifierDataTest.rf_cls_model()

@@ -1,3 +1,11 @@
+"""
+Section "For testcases that are used by multiple test functions" from
+Testing Best Practices for Machine Learning Libraries
+ https://towardsdatascience.com/testing-best-practices-for-machine-learning-libraries-41b7d0362c95
+
+might have been another solution
+"""
+
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
