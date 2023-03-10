@@ -1,3 +1,4 @@
+import numpy
 import pandas as pd
 import pytest
 import logging
@@ -8,9 +9,6 @@ import sys
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, 'src')))
 
-# import tests.conftest as conftest
-# import pytest_mock
-# from pytest_mock import mocker
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
@@ -18,8 +16,6 @@ from models import classifier as cls
 from gcp_interface.storage_interface import StorageInterface
 # from pathlib import Path
 # from _pytest.logging import LogCaptureFixture
-
-DATA = pd.DataFrame(data={"A": [1, 2, 3], "B": ["a", "b", "c"]})
 
 import logging
 import warnings
@@ -30,6 +26,13 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
                     level=LOGLEVEL)
 logger = logging.getLogger()
 
+DATA = pd.DataFrame(data={"A": [1, 2, 3], "B": ["a", "b", "c"]})
+DATA_2 = pd.DataFrame(data={"A": [1, 2, 3],
+                            "B": ["a", "b", "c"],
+                            "a": [4, 0, 0],
+                            "b": [0, 4, 0],
+                            "women_children_first_rule_eligible": [2, 0, 2]}
+                      )
 
 # pytest.skip("not yet", allow_module_level=True)
 
@@ -108,35 +111,55 @@ def test_retrieve_saved_model(tmp_path,
     assert len(set(mock_model.__dict__.keys()).intersection(model.__dict__.keys())) ==\
            len(set(mock_model.__dict__.keys()))
 
+    assert len(set(mock_model.__dict__.keys()).intersection(model.__dict__.keys())) == \
+           len(set(model.__dict__.keys()))
+
     for att in mock_model.__dict__.keys():
-        # TODO : check from here
-        logger.info(f"mock : {getattr(mock_model, att)}")
-        logger.info(f" model : {getattr(model, att)}")
-        assert getattr(mock_model, att) == getattr(model, att)
+        mock_attribute = getattr(mock_model, att)
+        model_attribute = getattr(model, att)
+        if type(mock_attribute) is int or type(mock_attribute) is float:
+            assert mock_attribute == model_attribute
+        elif isinstance(mock_attribute, numpy.ndarray):
+            assert mock_attribute.shape == model_attribute.shape
+        elif isinstance(mock_attribute, list):
+            assert len(model_attribute) == len(mock_attribute)
+        else:
+            assert isinstance(model_attribute, mock_attribute.__class__)
 
 
-@pytest.mark.skip("not yet")
-def test_get_titanic_survival_prediction(ClassifierDataTest, caplog, mocker):
+# @pytest.mark.skip("not yet")
+@pytest.mark.usefixtures("caplog")
+def test_get_titanic_survival_prediction(get_prediction_data, get_classifier_model, caplog, mocker):
     # mock preprocess and use a fitted model
-    application_data = ClassifierDataTest.prediction_data()
-    mock_model = ClassifierDataTest.rf_cls_model()
+    application_data, features = get_prediction_data
+    mock_model = get_classifier_model
     caplog.set_level(logging.INFO)
 
-    mocker.patch('src.preprocessing.titanic_preprocessing.preprocess',
+    # we have to mock all the functions in preprocess too since the code inside preprocess is run
+    mocker.patch('preprocessing.titanic_preprocessing.fill_na',
+                 return_value=DATA)
+    mocker.patch('preprocessing.titanic_preprocessing.women_children_first_rule',
+                 return_value=DATA)
+    mocker.patch('preprocessing.titanic_preprocessing.dummify_categorical',
+                 return_value=DATA_2)
+    mocker.patch('preprocessing.titanic_preprocessing.clean_dataframe',
                  return_value=application_data)
+    # As the preprocess function computes the gender values, the value of gender_col must be one column from DATA
     predictions_df = cls.get_titanic_survival_prediction(model=mock_model,
-                                                         application_data=application_data,
-                                                         data_configuration={'passenger_id': 'PassengerId'})
+                                                         application_data=DATA,
+                                                         data_configuration={'passenger_id': 'PassengerId',
+                                                                             "features": {'gender_col': 'B',
+                                                                                          'age_col': 'A'}})
     records = caplog.records
     assert len(records) == 1
-    assert records[0].message == f" [MODEL PREDICT] Feature columns to be used are : {ClassifierDataTest.features}"
+    assert records[0].message == f" [MODEL PREDICT] Feature columns to be used are : {features}."
     assert isinstance(predictions_df, pd.DataFrame)
     assert len(set(predictions_df.columns).difference({"PassengerId",
                                                        "predicted_survival_probability",
                                                        "predicted_survival"}
                                                       )
                ) == 0
-    for prob, pred in predictions_df["predicted_survival_probability", "predicted_survival"].values:
+    for prob, pred in predictions_df[["predicted_survival_probability", "predicted_survival"]].values:
         assert (pytest.approx(prob) == 0 or prob > 0) and (pytest.approx(prob) == 1 or prob < 1)
         assert pytest.approx(pred) == 0 or pytest.approx(pred) == 1
 
@@ -148,8 +171,7 @@ def test_train_model_in_local():
     pass
 
 
-@pytest.mark.skip("not yet")
+@pytest.mark.skip("""Test skipped so far because predict_in_local is a sequence of calls to other functions or methods
+ requiring interaction with GCS and a trained model""")
 def test_predict_in_local():
-    # Test skipped because predict_in_local is a sequence of calls to other functions or methods requiring interaction
-    # with GCS and a trained model
     pass

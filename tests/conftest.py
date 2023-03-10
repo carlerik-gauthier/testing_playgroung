@@ -8,17 +8,16 @@ class ClassifierDataTest(object):
     def __init__(self):
         self._input_df = pd.DataFrame(data={'age': [3.5, 22, 3.5, 30, 4],
                                             'Pclass': [1, 2, 3, 1, 2],
-                                            'women_child': [2, 2, 2, 0, 2],
+                                            'women_children_first_rule_eligible': [2, 2, 2, 0, 2],
                                             'female': [13, 13, 0, 0, 0],
                                             'survived': [1, 0, 0, 1, 0]})
-        self.features = ['age', 'Pclass', 'women_child', 'female']
+        self.features = ['age', 'Pclass', 'women_children_first_rule_eligible', 'female']
         self.target_col = 'survived'
 
         self._prediction_data = pd.DataFrame(data={
-            'PassengerId': ["pass_1", "pass_10", "pass_100", "pass_502", "pass_1234"],
             'age': [5, 42, 75, 30, 2],
             'Pclass': [3, 2, 1, 1, 3],
-            'women_child': [2, 0, 0, 2, 2],
+            'women_children_first_rule_eligible': [2, 0, 0, 2, 2],
             'female': [13, 0, 0, 13, 0]})
 
     # @pytest.fixture(scope='session')
@@ -27,7 +26,7 @@ class ClassifierDataTest(object):
 
     # @pytest.fixture(scope='session')
     def prediction_data(self):
-        return self._prediction_data
+        return [self._prediction_data, self.features]
 
     # @pytest.fixture(scope='session')
     def rf_cls_model(self):

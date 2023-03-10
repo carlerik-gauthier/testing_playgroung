@@ -96,7 +96,7 @@ def get_titanic_survival_prediction(model: RandomForestClassifier,
                          gender_col=gender_col,
                          fixed_columns=feat_dict.get('fixed', [age_col, gender_col]),
                          )
-    target_col = data_configuration.get('target_col')
+    target_col = data_configuration.get('target_col', '')
     feature_cols = [c for c in data_df.columns if c != target_col]
 
     # make prefiction
@@ -104,8 +104,10 @@ def get_titanic_survival_prediction(model: RandomForestClassifier,
     predictions = model.predict(X=data_df[feature_cols])
     proba_predictions = model.predict_proba(X=data_df[feature_cols])
     # turn predictions to a dataframe
-    passenger_id = data_configuration.get('passenger_id')
-    predictions_df = pd.DataFrame(data={passenger_id: application_data[passenger_id],
+    passenger_id = data_configuration.get('passenger_id', 'passenger_id')
+    predictions_df = pd.DataFrame(data={passenger_id: application_data.get(passenger_id,
+                                                                           [f"p_{i}" for i in range(len(predictions))]
+                                                                           ),
                                         'predicted_survival_probability': proba_predictions.T[1],
                                         'predicted_survival': predictions,
                                         }
@@ -133,10 +135,12 @@ def train_model_in_local(gs_interface: StorageInterface,
     target_col = data_configuration.get('target_col', '')
     age_col = feat_dict.get('age_col', '')
     gender_col = feat_dict.get('gender_col', '')
+    fixed_columns = [target_col] + feat_dict.get('fixed', [age_col, gender_col]) if target_col != '' \
+        else feat_dict.get('fixed', [age_col, gender_col])
     data_df = preprocess(df=train_data,
                          age_col=age_col,
                          gender_col=gender_col,
-                         fixed_columns=[target_col]+feat_dict.get('fixed', [age_col, gender_col]),
+                         fixed_columns=fixed_columns,
                          )
     target_col = data_configuration.get('target_col')
     feature_cols = [c for c in data_df.columns if c != target_col]

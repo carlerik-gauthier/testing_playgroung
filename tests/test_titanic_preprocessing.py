@@ -122,6 +122,31 @@ def test_women_children_first_rule(input_df: DataFrame,
                    )
 
 
+# TODO : write test
+@pytest.skip("test not written yet")
+@pytest.mark.parametrize(
+    """input_df, children_women_first_rule_column_name, fixed_columns, gender_value_list, expected_result""",
+    param_preprocess.preprocessing_clean_dataframe())
+def test_clean_dataframe(input_df: DataFrame,
+                         children_women_first_rule_column_name: str,
+                         fixed_columns: list,
+                         gender_value_list: list,
+                         expected_result: DataFrame):
+    clean_df = tp.clean_dataframe(df=input_df,
+                                  children_women_first_rule_column_name=children_women_first_rule_column_name,
+                                  fixed_columns=fixed_columns,
+                                  gender_value_list=gender_value_list
+                                  )
+
+    ref_set = set(fixed_columns).union({children_women_first_rule_column_name}).union(set(gender_value_list))
+    assert id(clean_df) != id(input_df)
+
+    assert len(set(clean_df.columns).intersection(ref_set)) == len(clean_df.columns)
+    assert len(set(clean_df.columns).intersection(ref_set)) == len(ref_set)
+
+    testing.assert_frame_equal(left=clean_df, right=expected_result, check_dtype=False, check_names=False)
+
+
 @pytest.mark.parametrize(
     """input_df, age_col, gender_col, fixed_columns, fill_na_default_value, female_gender_value,
     children_women_first_rule_column_name, children_women_first_rule_scale, dummy_scale, expected_result""",

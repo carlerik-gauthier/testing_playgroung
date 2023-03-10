@@ -133,6 +133,23 @@ class TitanicPreprocessingDataTest(object):
         #     children_women_first_rule_column_name, children_women_first_rule_scale, dummy_scale, expected_result
         return checks
 
+    @staticmethod
+    def clean_dataframe():
+        input_data_df = pd.DataFrame(data={'A': [1, 2, 3, 6, 4, 0, None],
+                                           'B': [0, 1, 2, 3, 4, 5, 6],
+                                           'C': ['A', '', None, 'sds', 'TRsd', 'AT_Aa', ' '],
+                                           'D': ['1', 'R', 'y', 'Ui', '@sd', 'ty_72', 'None'],
+                                           'E': [3.1, -1.1, 2, 0, None, 6.123, -7871],
+                                           'F': [3.1, -1.1, 2, 0, 3.2, 6.123, -7871]})
+
+        # children_women_first_rule_column_name,  fixed_columns: list, gender_value_list, expected
+        checks = [(input_data_df, 'D', ['A', 'B', 'C'], ['E', 'F'], ...),
+                  (input_data_df, 'A', [], ['D'], ...),
+                  (input_data_df, 'C', ['D'], [], ...),
+                  (input_data_df, 'D', [], [],  ...),
+                  (input_data_df, 'D', ['E'] , ['F'], ...)
+                  ]
+
 
 titanic_preprocessing = TitanicPreprocessingDataTest()
 
@@ -152,3 +169,7 @@ def preprocessing_data_women_children_first_rule():
 
 def preprocessing_data_preprocess():
     return titanic_preprocessing.data_preprocess()
+
+
+def preprocessing_clean_dataframe():
+    return titanic_preprocessing.clean_dataframe()
