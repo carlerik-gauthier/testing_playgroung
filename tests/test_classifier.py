@@ -1,10 +1,13 @@
 import numpy
+import pandas
 import pandas as pd
 import pytest
 import logging
 import pickle
 import os
 import sys
+
+import pytest_mock
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, 'src')))
@@ -164,11 +167,52 @@ def test_get_titanic_survival_prediction(get_prediction_data, get_classifier_mod
         assert pytest.approx(pred) == 0 or pytest.approx(pred) == 1
 
 
-@pytest.mark.skip("not yet")
-def test_train_model_in_local():
+@pytest.mark.usefixtures('caplog')
+def test_train_model_in_local(get_rf_classification_model_training_data, tmp_path, mocker, caplog):
     # Testing how data is moved through the process ==> testing logger infos
+    input_df, features, target_col = get_rf_classification_model_training_data
+    caplog.set_level(logging.INFO)
+    bucket_name = "bucket"
+    gs_dir_path = 'gs_uri'
+    model_name = 'my_model'
+    local_dir_path = tmp_path.as_posix()
+
+    tmp_path.mkdir(exist_ok=True)
     # mock preprocess, get_rf_classification_model, gs_interface.local_to_storage, get_data_from_storage
-    pass
+
+    # mocking get_data_from_storage
+    mocker.patch('models.classifier.get_data_from_storage', return_value=DATA)
+    # mock content ?
+
+    # mocking
+    mocker.patch('gcp_interface.storage_interface.StorageInterface.local_to_storage',
+                 return_value=None)
+
+    # clean_dataframe is the last stage from preprocess function
+    mocker.patch('preprocessing.titanic_preprocessing.clean_dataframe', return_value=input_df)
+
+    cls.train_model_in_local(gs_interface=StorageInterface(project_name='project'),
+                             bucket_name=bucket_name,
+                             gs_dir_path=gs_dir_path,
+                             local_dir_path=local_dir_path,
+                             train_name="toto",
+                             data_configuration={'passenger_id': 'PassengerId',
+                                                 "features": {'gender_col': 'B',
+                                                              'age_col': 'A'},
+                                                 'target_col': target_col},
+                             model_name="my_model"
+                             )
+    records = caplog.records
+    # train in local has 4 main logs to be tested below
+    assert len(records) >= 4
+    assert records[0].message == f" [MODEL TRAIN] Feature columns are : {features}. \n Target column is {target_col}"
+
+    filename = model_name + '.pickle'
+    file_local_path = os.path.join(local_dir_path, filename)
+    assert records[-3].message == f" -- Dumping model to {file_local_path}"
+    assert records[-2].message == f"Uploading model to Storage : {bucket_name}/{gs_dir_path}/{model_name}"""
+    local_working_directory = os.path.join(os.getcwd(), local_dir_path)
+    assert records[-1].message == f"Local directory is {local_working_directory}"
 
 
 @pytest.mark.skip("""Test skipped so far because predict_in_local is a sequence of calls to other functions or methods

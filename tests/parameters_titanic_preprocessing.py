@@ -8,7 +8,8 @@ might have been another solution
 
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
+from copy import deepcopy
+# from sklearn.ensemble import RandomForestClassifier
 
 
 class TitanicPreprocessingDataTest(object):
@@ -143,12 +144,16 @@ class TitanicPreprocessingDataTest(object):
                                            'F': [3.1, -1.1, 2, 0, 3.2, 6.123, -7871]})
 
         # children_women_first_rule_column_name,  fixed_columns: list, gender_value_list, expected
-        checks = [(input_data_df, 'D', ['A', 'B', 'C'], ['E', 'F'], ...),
-                  (input_data_df, 'A', [], ['D'], ...),
-                  (input_data_df, 'C', ['D'], [], ...),
-                  (input_data_df, 'D', [], [],  ...),
-                  (input_data_df, 'D', ['E'] , ['F'], ...)
+
+        # fixed_columns + [children_women_first_rule_column_name] + gender_value_list
+        checks = [(input_data_df, 'D', ['A', 'B', 'C'], ['E', 'F'], deepcopy(input_data_df)),
+                  (input_data_df, 'A', [], ['D'], deepcopy(input_data_df[['A', 'D']])),
+                  (input_data_df, 'C', ['D'], [], deepcopy(input_data_df[['D', 'C']])),
+                  (input_data_df, 'D', [], [],  deepcopy(input_data_df[['D']])),
+                  (input_data_df, 'D', ['E'], ['F'], deepcopy(input_data_df[['E', 'D', 'F']]))
                   ]
+
+        return checks
 
 
 titanic_preprocessing = TitanicPreprocessingDataTest()

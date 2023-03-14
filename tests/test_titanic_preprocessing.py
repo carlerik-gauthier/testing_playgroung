@@ -122,8 +122,6 @@ def test_women_children_first_rule(input_df: DataFrame,
                    )
 
 
-# TODO : write test
-@pytest.skip("test not written yet")
 @pytest.mark.parametrize(
     """input_df, children_women_first_rule_column_name, fixed_columns, gender_value_list, expected_result""",
     param_preprocess.preprocessing_clean_dataframe())

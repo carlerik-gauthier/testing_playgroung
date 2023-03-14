@@ -47,7 +47,7 @@ def women_children_first_rule(df: DataFrame,
 def clean_dataframe(df: DataFrame,
                     children_women_first_rule_column_name: str,
                     fixed_columns: list,
-                    gender_value_list: list):
+                    gender_value_list: list) -> DataFrame:
     dg = deepcopy(df)
     return dg[fixed_columns + [children_women_first_rule_column_name] + gender_value_list]
 
@@ -74,8 +74,11 @@ def preprocess(df: DataFrame,
                                    new_col_name=children_women_first_rule_column_name,
                                    scale=children_women_first_rule_scale)
     dg = dummify_categorical(df=dg, col=gender_col, scale=dummy_scale)
+
     clean_df = clean_dataframe(df=dg,
                                fixed_columns=fixed_columns,
                                children_women_first_rule_column_name=children_women_first_rule_column_name,
-                               gender_value_list=gender_values[:-1])
+                               gender_value_list=gender_values[:-1]
+                               )
+
     return clean_df

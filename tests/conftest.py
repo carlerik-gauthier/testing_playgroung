@@ -11,6 +11,7 @@ class ClassifierDataTest(object):
                                             'women_children_first_rule_eligible': [2, 2, 2, 0, 2],
                                             'female': [13, 13, 0, 0, 0],
                                             'survived': [1, 0, 0, 1, 0]})
+
         self.features = ['age', 'Pclass', 'women_children_first_rule_eligible', 'female']
         self.target_col = 'survived'
 

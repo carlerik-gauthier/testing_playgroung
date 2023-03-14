@@ -101,8 +101,8 @@ def get_titanic_survival_prediction(model: RandomForestClassifier,
 
     # make prefiction
     logger.info(f" [MODEL PREDICT] Feature columns to be used are : {feature_cols}.")
-    predictions = model.predict(X=data_df[feature_cols])
-    proba_predictions = model.predict_proba(X=data_df[feature_cols])
+    predictions = model.predict(X=data_df.loc[:, feature_cols].values)
+    proba_predictions = model.predict_proba(X=data_df.loc[:, feature_cols].values)
     # turn predictions to a dataframe
     passenger_id = data_configuration.get('passenger_id', 'passenger_id')
     predictions_df = pd.DataFrame(data={passenger_id: application_data.get(passenger_id,
@@ -122,7 +122,7 @@ def train_model_in_local(gs_interface: StorageInterface,
                          train_name: str,
                          data_configuration: dict,
                          model_name: str
-                         ):
+                         ) -> None:
     # Retrieve data from Storage
     train_data = get_data_from_storage(
         gs_interface=gs_interface,
@@ -155,9 +155,7 @@ def train_model_in_local(gs_interface: StorageInterface,
     logger.info(f" -- Dumping model to {file_local_path}")
     pickle.dump(model, open(file_local_path, 'wb'))
     # Upload output to Storage
-    logger.info(f"""Uploading model to Storage : 
-                    {bucket_name}/{gs_dir_path}/{model_name}"""
-                )
+    logger.info(f"Uploading model to Storage : {bucket_name}/{gs_dir_path}/{model_name}")
     local_working_directory = os.path.join(os.getcwd(), local_dir_path)
     logger.info(f"Local directory is {local_working_directory}")
     gs_interface.local_to_storage(data_name=filename,
@@ -190,7 +188,7 @@ def predict_in_local(gs_interface: StorageInterface,
                      predict_name: str,
                      local_dir_path: str,
                      data_configuration: dict,
-                     model_name: str):
+                     model_name: str) -> None:
 
     predict_data = get_data_from_storage(
         gs_interface=gs_interface,
