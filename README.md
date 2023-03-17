@@ -71,6 +71,14 @@ https://docs.pytest.org/en/7.1.x/how-to/fixtures.html
 https://docs.pytest.org/en/7.2.x/getting-started.html
 https://docs.pytest.org/en/6.2.x/fixture.html
 
+
+https://stackoverflow.com/questions/64672497/unit-testing-mock-gcs
+https://cloud.google.com/functions/docs/samples/functions-storage-unit-test?hl=fr#functions_storage_unit_test-python
+https://github.com/GoogleCloudPlatform/python-docs-samples/blob/HEAD/functions/helloworld/sample_storage_test.py
+https://blog.engineering.publicissapient.fr/2020/09/18/comment-empecher-unittest-mock-de-se-moquer-de-vous/
+
+https://pypi.org/project/pytest-bigquery-mock/
+
 https://stackoverflow.com/questions/34466027/in-pytest-what-is-the-use-of-conftest-py-files
 
 

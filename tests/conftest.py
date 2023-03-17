@@ -58,6 +58,8 @@ def get_prediction_data():
     return ClassifierDataTest().prediction_data()
 
 
-class StorageInterfaceDataTest:
+class StorageInterfaceFixtures:
     def __init__(self):
-        pass
+        self.project_name_ll = ["A", 'b_n', '', None]
+        self.credentials_ll = ["to", '&@289', '', None]
+
