@@ -93,7 +93,7 @@ def test_property_gs_client(mock_storage):
     TestCase().assertEqual(mock_gcs_client, gcs.gs_client)
 
 
-# @pytest.mark.skip
+@pytest.mark.skip
 @mock.patch("gcp_interface.storage_interface.storage")
 def test_setter_gs_client(mock_storage):
     mock_gcs_client = mock_storage.Client.return_value
@@ -109,29 +109,46 @@ def test_setter_gs_client(mock_storage):
 
 
 @pytest.mark.skip
-def test_property_project_name():
-    # TODO : I'm here
-    # https://stackoverflow.com/questions/64672497/unit-testing-mock-gcs
-    pass
+@mock.patch("gcp_interface.storage_interface.storage")
+@pytest.mark.parametrize("project_name, credentials", p_gcs.project_name_property())
+def test_property_project_name(mock_storage, project_name, credentials):
+    _ = mock_storage.Client.return_value
+    gcs = StorageInterface(project_name=project_name, credentials=credentials)
+    if project_name is not None:
+        assert gcs.project_name == project_name
+    else:
+        assert gcs.project_name is None
 
 
 @pytest.mark.skip
-def test_setter_project_name():
-    pass
-
-
-@pytest.mark.skip
-def test_property_credentials_no_project_name():
+def test_property_project_name_no_credentials():
     gcs = StorageInterface()
     assert gcs.project_name is None
 
-@pytest.mark.skip
+
+# @pytest.mark.skip
+@mock.patch("gcp_interface.storage_interface.storage")
+@pytest.mark.parametrize("project_name, new_project_name", p_gcs.project_name_setter())
+def test_setter_project_name(mock_storage, project_name, new_project_name):
+    _ = mock_storage.Client.return_value
+    gcs_1 = StorageInterface()
+    gcs_2 = StorageInterface(project_name=project_name)
+    gcs_3 = StorageInterface(project_name=project_name, credentials="credentials")
+
+    for gcs in [gcs_1, gcs_2, gcs_3]:
+        gcs.project_name = new_project_name
+
+        assert gcs.project_name == new_project_name
+
+
+@pytest.mark.skip(" it is a raw call to storage.Client. For other tests it simply mocked")
 def test_gs_get_client():
     pass
 
 
 @pytest.mark.skip
 def test_gs_get_bucket():
+    # https://stackoverflow.com/questions/64672497/unit-testing-mock-gcs
     pass
 
 
