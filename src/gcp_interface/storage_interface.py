@@ -78,12 +78,10 @@ class StorageInterface:
         source = '' if source is None else source
         bucket = self.get_bucket(bucket_name=bucket_name)
         prefix = os.path.join(source, data_prefix)
-        if source[-1] == '/':
+        if source != '' and source[-1] == '/':
             prefix = source + data_prefix
         for i in bucket.list_blobs(prefix=prefix):
-            local_file_path = os.path.join(
-                destination, os.path.basename(i.name)
-            )
+            local_file_path = os.path.join(destination, os.path.basename(i.name))
             i.download_to_filename(filename=local_file_path)
 
     def local_to_storage(self,
@@ -99,7 +97,7 @@ class StorageInterface:
         :param bucket_name: the name of the bucket
         :param local_dir_path: the path in local where data tables are
         stored
-        :param storage_dir_path: the path to the storage destination to
+        :param storage_dir_path: storage directory name to
          which data is transferred
         # :param timeout: the timeout after which the connection to google
         # storage is stopped
@@ -213,6 +211,7 @@ class StorageInterface:
         else:
             prefix = os.path.join(gs_dir_path, data_name)
         return list(bucket.list_blobs(prefix=prefix))
+        # return self.gs_client.list_blobs(bucket_or_name=bucket, prefix=prefix)
 
     def list_blob_uris(self,
                        bucket_name: str,
@@ -292,10 +291,6 @@ class StorageInterface:
                              data_name: str,
                              gs_dir_path: str = None
                              ) -> None:
-        # gs_path = data_name if gs_dir_path is None \
-        #     else os.path.join(gs_dir_path, data_name)
-
-        # tmp_file_name = 'tmp__' + data_name
         local_dir_path = 'temporary'
         # create an empty temporary directory
         i = 0
@@ -308,9 +303,6 @@ class StorageInterface:
 
         # upload dataframe to local
         df.to_csv(os.path.join(local_dir_path, data_name), index=False)
-        # files_list = [os.path.join(local_dir_path, basename)
-        #               for basename in os.listdir(local_dir_path)
-        #               ]
 
         # upload local files to storage
         self.local_to_storage(data_name=data_name,

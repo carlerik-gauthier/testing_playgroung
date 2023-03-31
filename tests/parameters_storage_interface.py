@@ -39,8 +39,8 @@ def credentials_setter():
 
 
 def project_name_property():
-    return StorageInterfaceDataTest().credentials_property()
+    return StorageInterfaceDataTest().project_name_property()
 
 
 def project_name_setter():
-    return StorageInterfaceDataTest().credentials_setter()
+    return StorageInterfaceDataTest().project_name_setter()

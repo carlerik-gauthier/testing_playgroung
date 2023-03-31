@@ -97,13 +97,14 @@ def test_property_gs_client(mock_storage):
 @mock.patch("gcp_interface.storage_interface.storage")
 def test_setter_gs_client(mock_storage):
     mock_gcs_client = mock_storage.Client.return_value
-
+    gcs = StorageInterface(project_name=mock_gcs_client)
     mock_storage.Client.return_value = 'x1233444'
     mock_gcs_client_2 = mock_storage.Client.return_value
+    # before setter
+    TestCase().assertEqual(mock_gcs_client, gcs.gs_client)
 
-    gcs = StorageInterface(project_name=mock_gcs_client)
     gcs.gs_client = mock_gcs_client_2
-
+    # after setter
     TestCase().assertNotEqual(mock_gcs_client, mock_gcs_client_2)
     TestCase().assertEqual(mock_gcs_client_2, gcs.gs_client)
 
@@ -126,7 +127,7 @@ def test_property_project_name_no_credentials():
     assert gcs.project_name is None
 
 
-# @pytest.mark.skip
+@pytest.mark.skip
 @mock.patch("gcp_interface.storage_interface.storage")
 @pytest.mark.parametrize("project_name, new_project_name", p_gcs.project_name_setter())
 def test_setter_project_name(mock_storage, project_name, new_project_name):
@@ -135,65 +136,155 @@ def test_setter_project_name(mock_storage, project_name, new_project_name):
     gcs_2 = StorageInterface(project_name=project_name)
     gcs_3 = StorageInterface(project_name=project_name, credentials="credentials")
 
-    for gcs in [gcs_1, gcs_2, gcs_3]:
-        gcs.project_name = new_project_name
+    def process(gcs, project_name_init, project_name_new):
+        if project_name_init is not None:
+            assert gcs.project_name == project_name_init
+        else:
+            assert gcs.project_name is None
 
-        assert gcs.project_name == new_project_name
+        gcs.project_name = project_name_new
+
+        if project_name_new is not None:
+            assert gcs.project_name == project_name_new
+        else:
+            assert gcs.project_name is None
+
+    for gcs, p_name in [(gcs_1, None), (gcs_2, project_name), (gcs_3, project_name)]:
+        process(gcs=gcs, project_name_init=p_name, project_name_new=new_project_name)
 
 
-@pytest.mark.skip(" it is a raw call to storage.Client. For other tests it simply mocked")
+@pytest.mark.skip(" it is a raw call to storage.Client. For other tests it is simply mocked")
 def test_gs_get_client():
     pass
 
 
 @pytest.mark.skip
-def test_gs_get_bucket():
+@mock.patch('gcp_interface.storage_interface.storage')
+def test_gs_get_bucket(mock_storage):
     # https://stackoverflow.com/questions/64672497/unit-testing-mock-gcs
-    pass
+    mock_gcs_client = mock_storage.Client.return_value
+    mock_bucket = mock.Mock()
+    mock_bucket.name.return_value = "a-bucket-name"
+    mock_gcs_client.bucket.return_value = mock_bucket
+    gs = StorageInterface(project_name="project_name", credentials="credentials")
+    _ = gs.get_bucket(bucket_name="a-bucket-name")
+    mock_storage.Client.assert_called_once()
+    mock_gcs_client.bucket.assert_called_once_with("a-bucket-name")
 
 
 @pytest.mark.skip
-def test_storage_to_local():
-    pass
+@mock.patch('gcp_interface.storage_interface.storage')
+@pytest.mark.parametrize("source", ["src", None, "other/"])
+def test_storage_to_local(mock_storage, source):
+    data_prefix = "prefix"
+    destination = "dest"
+
+    mock_gcs_client = mock_storage.Client.return_value
+    mock_bucket = mock.Mock()
+
+    # see https://bradmontgomery.net/blog/how-world-do-you-mock-name-attribute/
+    mock_blob1 = mock.Mock()
+    mock_blob2 = mock.Mock()
+    name1 = mock.PropertyMock(return_value="test_1")
+    name2 = mock.PropertyMock(return_value="test_2")
+    type(mock_blob1).name = name1
+    type(mock_blob2).name = name2
+    mock_blob_list = [mock_blob1, mock_blob2]
+    mock_bucket.list_blobs.return_value = mock_blob_list
+    mock_gcs_client.bucket.return_value = mock_bucket
+
+    gs = StorageInterface(project_name="project_name", credentials="credentials")
+    gs.storage_to_local(data_prefix=data_prefix, bucket_name="my-bucket", source=source, destination=destination)
+    source = '' if source is None else source
+    prefix = os.path.join(source, data_prefix)
+    if source != '' and source[-1] == '/':
+        prefix = source + data_prefix
+
+    mock_storage.Client.assert_called_once()
+    # to do
+    mock_gcs_client.bucket.assert_called_once_with("my-bucket")
+    mock_bucket.list_blobs.assert_called_once_with(prefix=prefix)
+    for blob in mock_blob_list:
+        blob.download_to_filename.assert_called_once_with(filename=os.path.join(destination, blob.name))
 
 
 @pytest.mark.skip
-def test_local_to_storage():
-    pass
+@mock.patch('gcp_interface.storage_interface.storage')
+def test_local_to_storage(mock_storage, caplog):
+    caplog.set_level(logging.INFO)
+    mock_gcs_client = mock_storage.Client.return_value
+    mock_bucket = mock.Mock()
+    mock_gcs_client.bucket.return_value = mock_bucket
+    gs = StorageInterface(project_name="project_name", credentials="credentials")
+    gs.local_to_storage(data_name="toto",
+                        bucket_name="my-bucket",
+                        local_dir_path="local_dir",
+                        storage_dir_path="gcs_dir")
+    records = caplog.records
+    assert len(records) == 3
+    assert records[0].message == f"looking for file at {os.path.join('local_dir', 'toto')}"
+    assert records[1].message.startswith("bucket =")
+    assert records[2].message.startswith("blob =")
+
+    mock_storage.Client.assert_called_once()
+    mock_gcs_client.bucket.assert_called_once_with("my-bucket")
+    mock_bucket.blob.assert_called_once_with(blob_name=os.path.join('gcs_dir', 'toto'))
+    mock_bucket.blob.return_value.upload_from_filename.assert_called_once_with(
+        filename=os.path.join('local_dir', 'toto'))
 
 
-@pytest.mark.skip
-def test_check_existence():
-    pass
+#@pytest.mark.skip
+@mock.patch('gcp_interface.storage_interface.storage')
+def test_check_existence(mock_storage):
+    mock_gcs_client = mock_storage.Client.return_value
+    mock_bucket = mock.Mock()
+    mock_blob = mock.Mock()
+    mock_bucket.blob.return_value = mock_blob
+    mock_gcs_client.bucket.return_value = mock_bucket
+    gs = StorageInterface(project_name="project_name", credentials="credentials")
+    _ = gs.check_existence(bucket_name="my-bucket", data="toto", source="gcs_path/")
+
+    mock_storage.Client.assert_called_once()
+    mock_gcs_client.bucket.assert_called_once_with("my-bucket")
+    mock_bucket.blob.assert_called_once_with("gcs_path/toto")
+    mock_blob.exists.assert_called_once()
+    # bucket = self.get_bucket(bucket_name=bucket_name)
+    # blob = bucket.blob(source + data)
 
 
 @pytest.mark.skip
 def test_load_package_to_storage():
+    # is right method being called ?
     pass
 
 
 @pytest.mark.skip
 def test_delete_in_gs():
+    # is right method being called ?
     pass
 
 
 @pytest.mark.skip
 def test_list_blobs():
+    # is right method being called ?
     pass
 
 
 @pytest.mark.skip
 def test_list_blob_uris():
+    # is right method being called ?
     pass
 
 
 @pytest.mark.skip
 def test_storage_to_dataframe():
+    # is data correctly retrieved ?
     pass
 
 
 @pytest.mark.skip
 def test_storage_to_dataframe_via_local():
+    # is data correctly retrieved ?
     pass
 
 

@@ -9,9 +9,9 @@ I'll be using **pytest**.
 
 For this project, the Titanic dataset is used.
 
-The model is going to be a random forest. Note that no optimization is perform, nor advanced feature engineering.
+The model is going to be a random forest. Note that neither optimization nor advanced feature engineering is performed.
 
-# Reference
+# Some Reference
 
 unittest + nose2
 Unit Testing for Data Science with Python
@@ -80,7 +80,7 @@ https://blog.engineering.publicissapient.fr/2020/09/18/comment-empecher-unittest
 https://pypi.org/project/pytest-bigquery-mock/
 
 https://stackoverflow.com/questions/34466027/in-pytest-what-is-the-use-of-conftest-py-files
-
+https://bradmontgomery.net/blog/how-world-do-you-mock-name-attribute/
 
 A useful tip when figuring out what's going wrong is to have some .py file to experiment. Of course, this file should 
 not be Git-ed
