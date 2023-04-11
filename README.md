@@ -70,6 +70,7 @@ https://docs.pytest.org/en/6.2.x/logging.html
 https://docs.pytest.org/en/7.1.x/how-to/fixtures.html
 https://docs.pytest.org/en/7.2.x/getting-started.html
 https://docs.pytest.org/en/6.2.x/fixture.html
+https://docs.python.org/3/library/unittest.mock.html
 
 
 https://stackoverflow.com/questions/64672497/unit-testing-mock-gcs

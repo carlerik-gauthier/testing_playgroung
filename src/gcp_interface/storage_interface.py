@@ -149,8 +149,7 @@ class StorageInterface:
 
             if not blob.exists():
 
-                logger.warning(f"""
-                blob {blob} does not exist on Google Storage, uploading...""")
+                logger.warning(f"""-- blob {blob} does not exist on Google Storage, uploading...""")
 
                 blob.upload_from_filename(os.path.join(parent_path, 'package',
                                                        package_name))
@@ -159,8 +158,7 @@ class StorageInterface:
 
             else:
 
-                logger.info(f"""
-                blob {blob} does exist on Google Storage, re-uploading...""")
+                logger.info(f"""-- blob {blob} does exist on Google Storage, re-uploading...""")
                 blob.delete()
                 blob.upload_from_filename(
                     os.path.join(parent_path, 'package', package_name)

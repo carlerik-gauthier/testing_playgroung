@@ -9,6 +9,7 @@ sys.path.append(
 import tests.parameters_storage_interface as p_gcs
 
 from unittest import mock
+from unittest.mock import call
 from unittest import TestCase
 from gcp_interface.storage_interface import StorageInterface
 
@@ -233,7 +234,7 @@ def test_local_to_storage(mock_storage, caplog):
         filename=os.path.join('local_dir', 'toto'))
 
 
-#@pytest.mark.skip
+@pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
 def test_check_existence(mock_storage):
     mock_gcs_client = mock_storage.Client.return_value
@@ -252,10 +253,66 @@ def test_check_existence(mock_storage):
     # blob = bucket.blob(source + data)
 
 
-@pytest.mark.skip
-def test_load_package_to_storage():
-    # is right method being called ?
-    pass
+# @pytest.mark.skip
+@mock.patch('gcp_interface.storage_interface.storage')
+@pytest.mark.parametrize("packages, test_nb",
+                         [({"p1": "gs://bucket_name/p.bdist", "p2": " gs://bucket_name/r.sdist    "}, 0),
+                          ({"p1": "gs://bucket_name/p.bdist", "p2": "gs://bucket_name/r.sdist"}, 1),
+                          (dict(), 2)])
+def test_load_package_to_storage(mock_storage, packages, test_nb, caplog):
+    exists_return = (test_nb % 2 == 0)
+    nb_calls = len(packages.keys())
+
+    mock_gcs_client = mock_storage.Client.return_value
+    mock_bucket = mock.Mock()
+    mock_blob = mock.Mock()
+    bucket_name = mock.PropertyMock(return_value="bucket_name")
+    type(mock_bucket).name = bucket_name
+    mock_blob.exists.return_value = exists_return
+    mock_bucket.blob.return_value = mock_blob
+    mock_gcs_client.bucket.return_value = mock_bucket
+
+    caplog.set_level(logging.INFO)
+    gs = StorageInterface(project_name="project_name", credentials="credentials")
+    _ = gs.load_package_to_storage(bucket_name="bucket_name",
+                                   packages=packages,
+                                   parent_path="local_path/to/project")
+    records = caplog.records
+    assert len(records) == 2*nb_calls
+    for i in range(nb_calls):
+        if exists_return:
+            assert records[2 * i].levelname == "INFO"
+            assert records[2 * i].message == f"""-- blob {mock_blob} does exist on Google Storage, re-uploading..."""
+        else:
+            assert records[2 * i].levelname == "WARNING"
+            assert records[2 * i].message == f"""-- blob {mock_blob} does not exist on Google Storage, uploading..."""
+
+        assert records[2*i+1].levelname == "INFO"
+        assert records[2*i+1].message == f"blob {mock_blob} available on Google Storage"
+
+    mock_storage.Client.assert_called_once()
+    mock_gcs_client.bucket.assert_called_once_with("bucket_name")
+    if nb_calls == 0:
+        mock_bucket.blob.assert_not_called()
+        mock_blob.exists.assert_not_called()
+        mock_blob.delete.assert_not_called()
+        mock_blob.upload_from_filename.assert_not_called()
+    else:
+        if exists_return is False:
+            mock_blob.delete.assert_not_called()
+        else:
+            assert mock_blob.delete.call_count == nb_calls
+
+        assert mock_bucket.blob.call_count == nb_calls
+        assert mock_blob.exists.call_count == nb_calls
+        assert mock_blob.upload_from_filename.call_count == nb_calls
+
+        calls = [mock.call("p.bdist"), mock.call("r.sdist")]
+        upload_calls = [call('local_path/to/project/package/p1'),
+                        call('local_path/to/project/package/p2')]
+        mock_bucket.blob.assert_has_calls(calls, any_order=True)  # turn last option to False to make the test fail
+        # and see the list of calls
+        mock_blob.upload_from_filename.assert_has_calls(upload_calls, any_order=False)
 
 
 @pytest.mark.skip
