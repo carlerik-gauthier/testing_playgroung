@@ -253,7 +253,7 @@ def test_check_existence(mock_storage):
     # blob = bucket.blob(source + data)
 
 
-# @pytest.mark.skip
+@pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
 @pytest.mark.parametrize("packages, test_nb",
                          [({"p1": "gs://bucket_name/p.bdist", "p2": " gs://bucket_name/r.sdist    "}, 0),
@@ -316,16 +316,59 @@ def test_load_package_to_storage(mock_storage, packages, test_nb, caplog):
 
 
 @pytest.mark.skip
-def test_delete_in_gs():
+@mock.patch('gcp_interface.storage_interface.storage')
+@pytest.mark.parametrize("existence", [True, False])
+def test_delete_in_gs(mock_storage, existence, mocker):
     # is right method being called ?
-    pass
+    mock_gcs_client = mock_storage.Client.return_value
+    mock_bucket = mock.Mock()
 
+    mock_blob1 = mock.Mock()
+    mock_blob2 = mock.Mock()
+    name1 = mock.PropertyMock(return_value="test_1")
+    name2 = mock.PropertyMock(return_value="test_2")
+    type(mock_blob1).name = name1
+    type(mock_blob2).name = name2
+    mock_blob_list = [mock_blob1, mock_blob2] if existence else []
+    mock_bucket.list_blobs.return_value = mock_blob_list
+    mock_gcs_client.bucket.return_value = mock_bucket
+
+    mocker.patch('gcp_interface.storage_interface.StorageInterface.exist_in_gs',
+                 return_value=existence)
+    gs = StorageInterface(project_name="project_name", credentials="credentials")
+
+    _ = gs.delete_in_gs(data_name="data_name", bucket_name="bucket", gs_dir_path="gs://test")
+
+    if existence:
+        assert mock_gcs_client.bucket.call_count == 2
+        # mock_gcs_client.bucket.assert_called_once_with(bucket_name="bucket")  # it will called 2x
+        mock_gcs_client.bucket.assert_has_calls([call("bucket"), call("bucket")], any_order=True)
+        mock_bucket.delete_blobs.assert_called_once_with(blobs=mock_blob_list)
+        mock_bucket.list_blobs.assert_called_once_with(prefix="gs://test/data_name")
+    else:
+        mock_gcs_client.bucket.assert_not_called()
+        mock_bucket.delete_blocbs.assert_not_called()
+
+
+@pytest.mark.skip
+def test_exist_in_gs():
+    pass
+# return len(self.list_blobs(bucket_name=bucket_name,
+#                                    gs_dir_path=gs_dir_path,
+#                                    data_name=data_name)
+#                    ) > 0
 
 @pytest.mark.skip
 def test_list_blobs():
     # is right method being called ?
     pass
-
+# bucket = self.get_bucket(bucket_name=bucket_name)
+#         if gs_dir_path is None:
+#             prefix = data_name
+#         else:
+#             prefix = os.path.join(gs_dir_path, data_name)
+#         return list(bucket.list_blobs(prefix=prefix))
+#
 
 @pytest.mark.skip
 def test_list_blob_uris():
