@@ -254,10 +254,6 @@ class StorageInterface:
                                        delete_in_local: bool = True,
                                        local_dir_path: str = 'temporary'
                                        ) -> pandas.DataFrame:
-
-        # storage_to_local(self, data_prefix, bucket_name, source,
-        #                  destination)
-
         # create an empty temporary directory
         i = 0
         while os.path.exists(local_dir_path):

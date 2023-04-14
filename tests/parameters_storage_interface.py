@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 class StorageInterfaceDataTest:
     def __init__(self):
         self.project_name_ll = ["A", 'b_n', '', None]
@@ -44,3 +47,15 @@ def project_name_property():
 
 def project_name_setter():
     return StorageInterfaceDataTest().project_name_setter()
+
+
+def storage_to_dataframe():
+    from copy import deepcopy
+    df1 = pd.DataFrame(data={"A": [87, -5.1, 0], "B": ["t", "r", None]})
+    df2 = pd.DataFrame(data={"A": [7, -5, 40.1], "B": ["9", "Z", "@"]})
+
+    df3 = deepcopy(df1)
+    df4 = deepcopy(df2)
+    df3['Unnamed: 0'] = [0, 1, 3]
+    df4['Unnamed: 0'] = [0, 1, 3]
+    return [[df1, df2], [df3, df4], None]

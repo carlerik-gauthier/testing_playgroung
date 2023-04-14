@@ -351,43 +351,132 @@ def test_delete_in_gs(mock_storage, existence, mocker):
 
 
 @pytest.mark.skip
-def test_exist_in_gs():
-    pass
-# return len(self.list_blobs(bucket_name=bucket_name,
-#                                    gs_dir_path=gs_dir_path,
-#                                    data_name=data_name)
-#                    ) > 0
+@mock.patch('gcp_interface.storage_interface.storage')
+@pytest.mark.parametrize("existence", [True, False])
+def test_exist_in_gs(mock_storage, existence):
+    mock_gcs_client = mock_storage.Client.return_value
+    mock_bucket = mock.Mock()
+
+    mock_blob1 = mock.Mock()
+    mock_blob2 = mock.Mock()
+    mock_blob_list = [mock_blob1, mock_blob2] if existence else []
+    mock_bucket.list_blobs.return_value = mock_blob_list
+    mock_gcs_client.bucket.return_value = mock_bucket
+
+    gs = StorageInterface(project_name="project_name", credentials="credentials")
+    exists = gs.exist_in_gs(data_name="data_name", bucket_name="bucket", gs_dir_path="gs://test")
+
+    mock_bucket.list_blobs.assert_called_once_with(prefix="gs://test/data_name")
+    mock_gcs_client.bucket.assert_called_once_with('bucket')
+    assert exists == existence
+
 
 @pytest.mark.skip
-def test_list_blobs():
+@mock.patch('gcp_interface.storage_interface.storage')
+@pytest.mark.parametrize("gs_dir_path", ["gs://test", None])
+def test_list_blobs(mock_storage, gs_dir_path):
+    mock_gcs_client = mock_storage.Client.return_value
+    mock_bucket = mock.Mock()
+    mock_bucket.list_blobs.return_value = []
+    mock_gcs_client.bucket.return_value = mock_bucket
+    gs = StorageInterface(project_name="project_name", credentials="credentials")
+    if gs_dir_path is not None:
+        _ = gs.exist_in_gs(data_name="data_name", bucket_name="bucket", gs_dir_path=gs_dir_path)
+        prefix = "gs://test/data_name"
+    else:
+        _ = gs.exist_in_gs(data_name="data_name", bucket_name="bucket")
+        prefix = "data_name"
+
+    mock_bucket.list_blobs.assert_called_once_with(prefix=prefix)
+    mock_gcs_client.bucket.assert_called_once_with('bucket')
+
+
+@pytest.mark.skip
+@mock.patch('gcp_interface.storage_interface.storage')
+@pytest.mark.parametrize("existence", [True, False])
+def test_list_blob_uris(mock_storage, existence):
     # is right method being called ?
+    mock_gcs_client = mock_storage.Client.return_value
+    mock_bucket = mock.Mock()
+
+    mock_blob1 = mock.Mock()
+    mock_blob2 = mock.Mock()
+    name1 = mock.PropertyMock(return_value="test_1")
+    name2 = mock.PropertyMock(return_value="test_2")
+    type(mock_blob1).name = name1
+    type(mock_blob2).name = name2
+    mock_blob_list = [mock_blob1, mock_blob2] if existence else []
+    mock_bucket.list_blobs.return_value = mock_blob_list
+    mock_gcs_client.bucket.return_value = mock_bucket
+
+    gs = StorageInterface(project_name="project_name", credentials="credentials")
+    ll_uris = gs.list_blob_uris(data_name="data_name", bucket_name="bucket", gs_dir_path="gs://test")
+    expected_output = ["gs://bucket/test_1", "gs://bucket/test_2"]
+    mock_bucket.list_blobs.assert_called_once_with(prefix="gs://test/data_name")
+    mock_gcs_client.bucket.assert_called_once_with('bucket')
+    assert all([x == y for x, y in zip(ll_uris, expected_output)])
+
+
+@pytest.mark.skip
+@mock.patch('gcp_interface.storage_interface.storage')
+@pytest.mark.parametrize("data_df", p_gcs.gs_initialization())
+def test_storage_to_dataframe(mock_storage, data_df, caplog, tmp_path, mocker):
+    mock_gcs_client = mock_storage.Client.return_value
+    mock_bucket = mock.Mock()
+    mock_bucket.list_blobs.return_value = []
+    mock_gcs_client.bucket.return_value = mock_bucket
+
+    # is data correctly retrieved ?
+    local_dir_path = tmp_path.as_posix()
+    tmp_path.mkdir(exist_ok=True)
+
+    # upload data to csv files in local_dir_path. The locations will be used in the mocker patch below
+    # TBD
+    #############
+
+    caplog.set_level(logging.INFO)
+    gs = StorageInterface(project_name="project_name", credentials="credentials")
+    mocker.patch('gcp_interface.storage_interface.StorageInterface.list_blob_uris',
+                 return_value=...)
+    output_df = gs.storage_to_dataframe(bucket_name="bucket_name", data_name="data", gs_dir_path="gs://test")
+    records = caplog.records
+    assert len(records) > 0
+    assert records[0].message.split(":")[0].strip() == "[STORAGE] Looking at the following uris list"
+    # test exceptions and sys exit
+    # test output
     pass
-# bucket = self.get_bucket(bucket_name=bucket_name)
-#         if gs_dir_path is None:
-#             prefix = data_name
-#         else:
-#             prefix = os.path.join(gs_dir_path, data_name)
-#         return list(bucket.list_blobs(prefix=prefix))
+
+#     def storage_to_dataframe(self,
+#                              bucket_name: str,
+#                              data_name: str,
+#                              gs_dir_path: str = None
+#                              ) -> pandas.DataFrame:
+#         uris = self.list_blob_uris(bucket_name=bucket_name,
+#                                    data_name=data_name,
+#                                    gs_dir_path=gs_dir_path)
+#         logger.info(f"[STORAGE] Looking at the following uris list :\n {uris}")
+#         dfs = map(lambda uri: pd.read_csv(uri), uris)
+#         try:
+#             df = pd.concat(dfs, ignore_index=True).drop(columns='Unnamed: 0')
+#         except KeyError:
+#             dfs = map(lambda uri: pd.read_csv(uri), uris)
+#             df = pd.concat(dfs, ignore_index=True)
+#         except ValueError:
+#             logger.error("Data is NOT available in Storage")
+#             sys.exit(1)
 #
+#         return df
 
 @pytest.mark.skip
-def test_list_blob_uris():
-    # is right method being called ?
-    pass
-
-
-@pytest.mark.skip
-def test_storage_to_dataframe():
+@mock.patch('gcp_interface.storage_interface.storage')
+def test_storage_to_dataframe_via_local(mock_storage):
     # is data correctly retrieved ?
+    # idem que storage_to_dataframe en tant que mock_storage
     pass
 
 
 @pytest.mark.skip
-def test_storage_to_dataframe_via_local():
-    # is data correctly retrieved ?
-    pass
-
-
-@pytest.mark.skip
-def test_dataframe_to_storage():
+@mock.patch('gcp_interface.storage_interface.storage')
+def test_dataframe_to_storage(mock_storage):
+    # il y aura du bucket.blob et du blob.upload_from_filename
     pass
