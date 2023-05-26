@@ -58,4 +58,4 @@ def storage_to_dataframe():
     df4 = deepcopy(df2)
     df3['Unnamed: 0'] = [0, 1, 3]
     df4['Unnamed: 0'] = [0, 1, 3]
-    return [[df1, df2], [df3, df4], None]
+    return [([df1, df2], ['A', 'B']), ([df3, df4], ['A', 'B'])]

@@ -237,14 +237,13 @@ class StorageInterface:
         logger.info(f"[STORAGE] Looking at the following uris list :\n {uris}")
         dfs = map(lambda uri: pd.read_csv(uri), uris)
         try:
-            df = pd.concat(dfs, ignore_index=True).drop(columns='Unnamed: 0')
-        except KeyError:
-            dfs = map(lambda uri: pd.read_csv(uri), uris)
             df = pd.concat(dfs, ignore_index=True)
         except ValueError:
-            logger.error("Data is NOT available in Storage")
-            sys.exit(1)
-
+            raise ValueError("Data is NOT available in Storage")
+            # sys.exit(1)
+        if 'Unnamed: 0' in df.columns:
+            logger.info("Detected a column 'Unnamed: 0', dropping it")
+            df.drop(columns='Unnamed: 0', inplace=True)
         return df
 
     def storage_to_dataframe_via_local(self,
@@ -255,13 +254,7 @@ class StorageInterface:
                                        local_dir_path: str = 'temporary'
                                        ) -> pandas.DataFrame:
         # create an empty temporary directory
-        i = 0
-        while os.path.exists(local_dir_path):
-            i += 1
-            core = local_dir_path.split('__')[0]
-            local_dir_path = core + f'__{i}'
-
-        os.mkdir(local_dir_path)
+        self._create_local_directory(local_dir_path=local_dir_path)
 
         self.storage_to_local(data_prefix=data_name,
                               bucket_name=bucket_name,
@@ -285,16 +278,8 @@ class StorageInterface:
                              data_name: str,
                              gs_dir_path: str = None
                              ) -> None:
-        local_dir_path = 'temporary'
-        # create an empty temporary directory
-        i = 0
-        while os.path.exists(local_dir_path):
-            i += 1
-            core = local_dir_path.split('__')[0]
-            local_dir_path = core + f'__{i}'
 
-        os.mkdir(local_dir_path)
-
+        local_dir_path = self._create_local_directory(local_dir_path="temporary")
         # upload dataframe to local
         df.to_csv(os.path.join(local_dir_path, data_name), index=False)
 
@@ -306,3 +291,18 @@ class StorageInterface:
 
         # delete in local the temporary folder containing the temporary files
         shutil.rmtree(local_dir_path)
+
+    @staticmethod
+    def _create_local_directory(local_dir_path: str) -> str:
+        """
+        :param local_dir_path:
+        :return:
+        """
+        i = 0
+        while os.path.exists(local_dir_path):
+            i += 1
+            core = local_dir_path.split('__')[0]
+            local_dir_path = core + f'__{i}'
+
+        os.mkdir(local_dir_path)
+        return local_dir_path

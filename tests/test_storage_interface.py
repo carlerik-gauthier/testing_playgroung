@@ -1,6 +1,7 @@
 import pytest
 import os
 import sys
+import pandas as pd
 
 import pytest_mock
 
@@ -419,53 +420,104 @@ def test_list_blob_uris(mock_storage, existence):
 
 @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
-@pytest.mark.parametrize("data_df", p_gcs.gs_initialization())
-def test_storage_to_dataframe(mock_storage, data_df, caplog, tmp_path, mocker):
+@pytest.mark.parametrize("data_df_list, expected_colums_name", p_gcs.storage_to_dataframe())
+def test_storage_to_dataframe_uris_available(mock_storage,
+                                             data_df_list,
+                                             expected_colums_name,
+                                             caplog,
+                                             tmp_path,
+                                             mocker
+                                             ):
+    # creates temp directory
+    local_dir_path = tmp_path / "test_dir"
+    local_dir_path.mkdir()
+    uris_list = []
+    csv_file_name_core = "test_file_{i}.csv"
+    for i, df in enumerate(data_df_list):
+        # upload dataframe from data_df_list to local_dir_path
+        csv_file_name = csv_file_name_core.format(i=i)
+        path = f"{local_dir_path}/{csv_file_name}"
+        uris_list.append(path)
+        df.to_csv(path, index=False)
+    expected_df = pd.concat(data_df_list, ignore_index=True)
+    if 'Unnamed: 0' in expected_df.columns:
+        expected_df.drop(columns='Unnamed: 0', inplace=True)
     mock_gcs_client = mock_storage.Client.return_value
     mock_bucket = mock.Mock()
-    mock_bucket.list_blobs.return_value = []
+    mock_bucket.list_blob.return_value = []
     mock_gcs_client.bucket.return_value = mock_bucket
-
-    # is data correctly retrieved ?
-    local_dir_path = tmp_path.as_posix()
-    tmp_path.mkdir(exist_ok=True)
-
-    # upload data to csv files in local_dir_path. The locations will be used in the mocker patch below
-    # TBD
-    #############
 
     caplog.set_level(logging.INFO)
     gs = StorageInterface(project_name="project_name", credentials="credentials")
     mocker.patch('gcp_interface.storage_interface.StorageInterface.list_blob_uris',
-                 return_value=...)
+                 return_value=uris_list)
     output_df = gs.storage_to_dataframe(bucket_name="bucket_name", data_name="data", gs_dir_path="gs://test")
     records = caplog.records
     assert len(records) > 0
-    assert records[0].message.split(":")[0].strip() == "[STORAGE] Looking at the following uris list"
-    # test exceptions and sys exit
-    # test output
-    pass
+    assert records[0].levelname == "INFO"
+    assert records[0].message == f"[STORAGE] Looking at the following uris list :\n {uris_list}"
+    assert mock_bucket.list_blob_uris.assert_called_once
+    # .split(":")[0].strip()
+    if 'Unnamed: 0' in data_df_list[0].columns:
+        # case uris is a list of dataframe with an 'Unnamed: 0' column
+        print(records)
+        assert len(records) == 2
+        assert records[1].levelname == "INFO"
+        assert records[1].message == "Detected a column 'Unnamed: 0', dropping it"
 
-#     def storage_to_dataframe(self,
-#                              bucket_name: str,
-#                              data_name: str,
-#                              gs_dir_path: str = None
-#                              ) -> pandas.DataFrame:
-#         uris = self.list_blob_uris(bucket_name=bucket_name,
-#                                    data_name=data_name,
-#                                    gs_dir_path=gs_dir_path)
-#         logger.info(f"[STORAGE] Looking at the following uris list :\n {uris}")
-#         dfs = map(lambda uri: pd.read_csv(uri), uris)
-#         try:
-#             df = pd.concat(dfs, ignore_index=True).drop(columns='Unnamed: 0')
-#         except KeyError:
-#             dfs = map(lambda uri: pd.read_csv(uri), uris)
-#             df = pd.concat(dfs, ignore_index=True)
-#         except ValueError:
-#             logger.error("Data is NOT available in Storage")
-#             sys.exit(1)
-#
-#         return df
+    assert isinstance(output_df, pd.DataFrame)
+    assert list(output_df.columns) == expected_colums_name
+    assert list(output_df.index) == [_ for _ in range(len(expected_df))]
+    pd.testing.assert_frame_equal(output_df, expected_df)
+    # assert len(output_df.columns) == len(expected_colums_name)
+    # assert len(set(output_df.columns).intersection(set(expected_colums_name))) == len(expected_colums_name)
+
+@pytest.mark.skip
+@mock.patch('gcp_interface.storage_interface.storage')
+def test_storage_to_dataframe_no_uris_available(mock_storage, caplog):
+    # case uris = []
+    mock_gcs_client = mock_storage.Client.return_value
+    mock_bucket = mock.Mock()
+    mock_bucket.list_blobs.return_value = []
+    mock_gcs_client.bucket.return_value = mock_bucket
+    caplog.set_level(logging.INFO)
+    gs = StorageInterface(project_name="project_name", credentials="credentials")
+    with pytest.raises(ValueError, match=r"Data is NOT available in Storage"):
+        gs.storage_to_dataframe(bucket_name="bucket_name", data_name="data", gs_dir_path="gs://test")
+        records = caplog.records
+        assert len(records) == 1
+        assert records[0].levelname == "INFO"
+        assert records[0].message == f"[STORAGE] Looking at the following uris list :\n []"
+
+
+# @pytest.mark.skip
+@mock.patch('gcp_interface.storage_interface.storage')
+@mock.patch('gcp_interface.storage_interface.os')
+@pytest.mark.parametrize("local_dir_path, should_exists", [('temp', True), ('temp', True), ('temp__0', True)])
+def test__create_local_directory(mock_os, mock_storage, local_dir_path, should_exists, tmp_path):
+    mock_gcs_client = mock_storage.Client.return_value
+    calls = [mock.call(local_dir_path)]
+    if should_exists:
+        expected_output = local_dir_path.split('__')[0] + '__1'
+        side_effect_dict = {local_dir_path: True, expected_output: False}
+
+        def side_effect(arg):
+            return side_effect_dict[arg]
+
+        mock_path_exists = mock.Mock()
+        mock_path_exists.side_effect = side_effect
+        mock_os.path.exists = mock_path_exists
+        calls.append(mock.call(expected_output))
+    else:
+        mock_os.path.exists.return_value = False
+        expected_output = local_dir_path
+
+    gs = StorageInterface(project_name="project_name", credentials="credentials")
+    output_dir_path_name = gs._create_local_directory(local_dir_path=local_dir_path)
+    assert output_dir_path_name == expected_output
+    mock_os.mkdir.assert_called_once_with(expected_output)
+    mock_os.path.exists.assert_has_calls(calls, any_order=False)
+    # refactoring possibility ?
 
 @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
@@ -478,5 +530,8 @@ def test_storage_to_dataframe_via_local(mock_storage):
 @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
 def test_dataframe_to_storage(mock_storage):
-    # il y aura du bucket.blob et du blob.upload_from_filename
+    # il y aura du bucket.blob et du blob.upload_from_filename à mock: assert call checks
+    # mock os.mkdir default a tmp path + assert call check
+    # mock shutil.rmtree
+    # https://stackoverflow.com/questions/24705236/how-to-patch-os-mkdir-with-mock
     pass
