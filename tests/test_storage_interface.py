@@ -2,7 +2,8 @@ import pytest
 import os
 import sys
 import pandas as pd
-
+import logging
+import warnings
 import pytest_mock
 
 sys.path.append(
@@ -14,9 +15,6 @@ from unittest.mock import call
 from unittest import TestCase
 from gcp_interface.storage_interface import StorageInterface
 
-
-import logging
-import warnings
 warnings.filterwarnings("ignore", """Your application has authenticated using
 end user credentials""")
 LOGLEVEL = os.environ.get("LOGLEVEL", "INFO").upper()
@@ -25,7 +23,7 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
 logger = logging.getLogger()
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch("gcp_interface.storage_interface.storage")
 @pytest.mark.parametrize("project_name, credentials", p_gcs.gs_initialization())
 def test_initialization(mock_storage, project_name, credentials):
@@ -44,7 +42,7 @@ def test_initialization(mock_storage, project_name, credentials):
     TestCase().assertEqual(mock_gcs_client, gcs._gs_client)
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch("gcp_interface.storage_interface.storage")
 def test_initialization_default(mock_storage):
     mock_gcs_client = mock_storage.Client.return_value
@@ -54,7 +52,7 @@ def test_initialization_default(mock_storage):
     TestCase().assertEqual(mock_gcs_client, gcs._gs_client)
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch("gcp_interface.storage_interface.storage")
 @pytest.mark.parametrize("project_name, credentials", p_gcs.credentials_property())
 def test_property_credentials(mock_storage, project_name, credentials):
@@ -66,13 +64,13 @@ def test_property_credentials(mock_storage, project_name, credentials):
         assert gcs.credentials is None
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 def test_property_credentials_no_credentials():
     gcs = StorageInterface()
     assert gcs.credentials is None
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch("gcp_interface.storage_interface.storage")
 @pytest.mark.parametrize("credentials, new_credentials", p_gcs.credentials_setter())
 def test_setter_credentials(mock_storage, credentials, new_credentials):
@@ -87,7 +85,7 @@ def test_setter_credentials(mock_storage, credentials, new_credentials):
         assert gcs.credentials == new_credentials
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch("gcp_interface.storage_interface.storage")
 def test_property_gs_client(mock_storage):
     mock_gcs_client = mock_storage.Client.return_value
@@ -95,7 +93,7 @@ def test_property_gs_client(mock_storage):
     TestCase().assertEqual(mock_gcs_client, gcs.gs_client)
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch("gcp_interface.storage_interface.storage")
 def test_setter_gs_client(mock_storage):
     mock_gcs_client = mock_storage.Client.return_value
@@ -111,7 +109,7 @@ def test_setter_gs_client(mock_storage):
     TestCase().assertEqual(mock_gcs_client_2, gcs.gs_client)
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch("gcp_interface.storage_interface.storage")
 @pytest.mark.parametrize("project_name, credentials", p_gcs.project_name_property())
 def test_property_project_name(mock_storage, project_name, credentials):
@@ -123,13 +121,13 @@ def test_property_project_name(mock_storage, project_name, credentials):
         assert gcs.project_name is None
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 def test_property_project_name_no_credentials():
     gcs = StorageInterface()
     assert gcs.project_name is None
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch("gcp_interface.storage_interface.storage")
 @pytest.mark.parametrize("project_name, new_project_name", p_gcs.project_name_setter())
 def test_setter_project_name(mock_storage, project_name, new_project_name):
@@ -160,7 +158,7 @@ def test_gs_get_client():
     pass
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
 def test_gs_get_bucket(mock_storage):
     # https://stackoverflow.com/questions/64672497/unit-testing-mock-gcs
@@ -174,7 +172,7 @@ def test_gs_get_bucket(mock_storage):
     mock_gcs_client.bucket.assert_called_once_with("a-bucket-name")
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
 @pytest.mark.parametrize("source", ["src", None, "other/"])
 def test_storage_to_local(mock_storage, source):
@@ -210,7 +208,7 @@ def test_storage_to_local(mock_storage, source):
         blob.download_to_filename.assert_called_once_with(filename=os.path.join(destination, blob.name))
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
 def test_local_to_storage(mock_storage, caplog):
     caplog.set_level(logging.INFO)
@@ -235,7 +233,7 @@ def test_local_to_storage(mock_storage, caplog):
         filename=os.path.join('local_dir', 'toto'))
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
 def test_check_existence(mock_storage):
     mock_gcs_client = mock_storage.Client.return_value
@@ -254,7 +252,7 @@ def test_check_existence(mock_storage):
     # blob = bucket.blob(source + data)
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
 @pytest.mark.parametrize("packages, test_nb",
                          [({"p1": "gs://bucket_name/p.bdist", "p2": " gs://bucket_name/r.sdist    "}, 0),
@@ -316,7 +314,7 @@ def test_load_package_to_storage(mock_storage, packages, test_nb, caplog):
         mock_blob.upload_from_filename.assert_has_calls(upload_calls, any_order=False)
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
 @pytest.mark.parametrize("existence", [True, False])
 def test_delete_in_gs(mock_storage, existence, mocker):
@@ -351,7 +349,7 @@ def test_delete_in_gs(mock_storage, existence, mocker):
         mock_bucket.delete_blocbs.assert_not_called()
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
 @pytest.mark.parametrize("existence", [True, False])
 def test_exist_in_gs(mock_storage, existence):
@@ -372,7 +370,7 @@ def test_exist_in_gs(mock_storage, existence):
     assert exists == existence
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
 @pytest.mark.parametrize("gs_dir_path", ["gs://test", None])
 def test_list_blobs(mock_storage, gs_dir_path):
@@ -392,7 +390,7 @@ def test_list_blobs(mock_storage, gs_dir_path):
     mock_gcs_client.bucket.assert_called_once_with('bucket')
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
 @pytest.mark.parametrize("existence", [True, False])
 def test_list_blob_uris(mock_storage, existence):
@@ -418,7 +416,7 @@ def test_list_blob_uris(mock_storage, existence):
     assert all([x == y for x, y in zip(ll_uris, expected_output)])
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
 @pytest.mark.parametrize("data_df_list, expected_colums_name", p_gcs.storage_to_dataframe())
 def test_storage_to_dataframe_uris_available(mock_storage,
@@ -469,10 +467,9 @@ def test_storage_to_dataframe_uris_available(mock_storage,
     assert list(output_df.columns) == expected_colums_name
     assert list(output_df.index) == [_ for _ in range(len(expected_df))]
     pd.testing.assert_frame_equal(output_df, expected_df)
-    # assert len(output_df.columns) == len(expected_colums_name)
-    # assert len(set(output_df.columns).intersection(set(expected_colums_name))) == len(expected_colums_name)
 
-@pytest.mark.skip
+
+# @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
 def test_storage_to_dataframe_no_uris_available(mock_storage, caplog):
     # case uris = []
@@ -490,11 +487,11 @@ def test_storage_to_dataframe_no_uris_available(mock_storage, caplog):
         assert records[0].message == f"[STORAGE] Looking at the following uris list :\n []"
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
 @mock.patch('gcp_interface.storage_interface.os')
 @pytest.mark.parametrize("local_dir_path, should_exists", [('temp', True), ('temp', True), ('temp__0', True)])
-def test__create_local_directory(mock_os, mock_storage, local_dir_path, should_exists, tmp_path):
+def test__create_local_directory(mock_os, mock_storage, local_dir_path, should_exists):
     mock_gcs_client = mock_storage.Client.return_value
     calls = [mock.call(local_dir_path)]
     if should_exists:
@@ -519,15 +516,72 @@ def test__create_local_directory(mock_os, mock_storage, local_dir_path, should_e
     mock_os.path.exists.assert_has_calls(calls, any_order=False)
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
-def test_storage_to_dataframe_via_local(mock_storage):
-    # is data correctly retrieved ?
-    # idem que storage_to_dataframe en tant que mock_storage
-    pass
+@mock.patch("pandas.concat")
+@mock.patch('gcp_interface.storage_interface.shutil')
+@mock.patch('gcp_interface.storage_interface.os')
+@pytest.mark.parametrize("delete_in_local, has_data", [(True, True), (True, False), (False, True), (False, False)])
+def test_storage_to_dataframe_via_local(mock_os,
+                                        mock_shutil,
+                                        mock_concat,
+                                        mock_storage,
+                                        delete_in_local,
+                                        has_data,
+                                        tmp_path):
+    # load 2 dataframes in tmp_path location
+    df1 = pd.DataFrame(data={"A": [87, -5.1, 0], "B": ["t", "r", None]})
+    df2 = pd.DataFrame(data={"A": [7, -5, 40.1], "B": ["9", "Z", "@"]})
+    data_df_list = [df1, df2]
+    # creates temp directory
+    local_dir_path = tmp_path / "test_dir"
+    local_dir_path.mkdir()
+    file_list = []
+    side_effect_dict = dict()
+    if has_data:
+        csv_file_name_core = "test_file_{i}.csv"
+        for i, df in enumerate(data_df_list):
+            # upload dataframe from data_df_list to local_dir_path
+            csv_file_name = csv_file_name_core.format(i=i)
+            file_list.append(csv_file_name)
+            path = f"{local_dir_path}/{csv_file_name}"
+            df.to_csv(path, index=False)
+            side_effect_dict[(local_dir_path.as_posix(), csv_file_name)] = path
+
+    mock_gcs_client = mock_storage.Client.return_value
+    mock_bucket = mock.Mock()
+    mock_bucket.list_blobs.return_value = []
+    mock_gcs_client.bucket.return_value = mock_bucket
+
+    mock_os.path.exists.return_value = False
+    mock_os.listdir.return_value = file_list
+    mock_concat.return_value = df1
+
+    def side_effect(arg1, arg2):
+        return side_effect_dict.get((arg1, arg2))
+
+    mock_os.path.join.side_effect = side_effect
+    gs = StorageInterface(project_name="project_name", credentials="credentials")
+    output = gs.storage_to_dataframe_via_local(bucket_name='toto',
+                                               data_name='data',
+                                               gs_dir_path='tutu',
+                                               delete_in_local=delete_in_local,
+                                               local_dir_path=local_dir_path.as_posix())
+
+    if has_data:
+        mock_concat.assert_called_once()
+        assert isinstance(output, pd.DataFrame)
+    else:
+        assert output is None
+        mock_concat.assert_not_called()
+
+    if delete_in_local:
+        mock_shutil.rmtree.assert_called_once_with(local_dir_path.as_posix())
+    else:
+        mock_shutil.rmtree.assert_not_called()
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
 @mock.patch("pandas.DataFrame.to_csv")
 @mock.patch('gcp_interface.storage_interface.shutil')

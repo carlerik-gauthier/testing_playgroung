@@ -2,16 +2,45 @@
 
 # Objective
 
-The purpose of this repo is to experiment testing with an ML project. 
+The purpose of this repo is to experiment unit testing with an ML project. Not only does it cover the expected behavior 
+from a function, but is also test whether data is correctly transformed or not.  
 I'll be using **pytest**.
 
 # Data and Model
 
-For this project, the Titanic dataset is used.
+In this project, the Titanic dataset is used.
 
 The model is going to be a random forest. Note that neither optimization nor advanced feature engineering is performed.
 
+# Helpful tip 
+A useful tip when figuring out what's going wrong is to have some .py file to experiment. Of course, this file should 
+not be Git-ed
+
+It's useful for 2 reasons :
+    - correcting the tested function or extend its ability to handle unexpected cases
+    - correcting the test itself. After all, it is code :) . It might as well be a coding issue as a logical one 
+
+# Conclusion
+Writing test about data transformation is interesting since it forces to think thoroughly about how it is transformed
+within a given function. As such, a first consequence of this project is that I started to think about lots of weird 
+cases that may happen. As such, it allowed me to redesign some functions to handle situations I haven't thought when 
+writing them in the first-hand.
+
+Another lesson learnt thanks to this project is that data transformation should be carried by a multitude of function 
+having one task rather than 1 or 2 functions doing all the job ... it is easier to test and to understand the process.
+
+
 # Some Reference
+Below are some references I find useful during this project.
+
+#### Blog
+
+#### Official documentation
+
+#### less useful, though interesting on their own
+
+
+TODO :  PLACE THE REFERENCE IN RIGHT PLACES
 
 unittest + nose2
 Unit Testing for Data Science with Python
@@ -85,10 +114,3 @@ https://bradmontgomery.net/blog/how-world-do-you-mock-name-attribute/
 
 https://stackoverflow.com/questions/24705236/how-to-patch-os-mkdir-with-mock
 https://stackoverflow.com/questions/65579240/unittest-mock-pandas-to-csv
-
-A useful tip when figuring out what's going wrong is to have some .py file to experiment. Of course, this file should 
-not be Git-ed
-
-It's useful for 2 reasons :
-    - correcting the tested function or extend its ability to handle unexpected cases
-    - correcting the test itself. After all, it is code :) . It might as well be a coding issue as a logical one 

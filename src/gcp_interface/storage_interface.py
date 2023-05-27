@@ -6,6 +6,7 @@ import shutil
 import pandas
 import pandas as pd
 from google.cloud import storage
+from typing import Union
 
 logger = logging.getLogger(__name__)
 
@@ -252,7 +253,7 @@ class StorageInterface:
                                        gs_dir_path: str = None,
                                        delete_in_local: bool = True,
                                        local_dir_path: str = 'temporary'
-                                       ) -> pandas.DataFrame:
+                                       ) -> Union[pandas.DataFrame, None]:
         # create an empty temporary directory
         local_dir_path = self._create_local_directory(local_dir_path=local_dir_path)
 
@@ -260,15 +261,19 @@ class StorageInterface:
                               bucket_name=bucket_name,
                               source=gs_dir_path,
                               destination=local_dir_path)
+        print(f"{local_dir_path=}")
+        print(f"{os.listdir(local_dir_path)}")
+        dfs = list(map(lambda f: pd.read_csv(os.path.join(local_dir_path, f)), os.listdir(local_dir_path)))
 
-        dfs = map(lambda f: pd.read_csv(os.path.join(local_dir_path, f)),
-                  os.listdir(local_dir_path))
-
-        df = pd.concat(dfs, ignore_index=True)
         # delete in local the temporary folder containing the temporary files
         # if user wants to delete it
         if delete_in_local:
             shutil.rmtree(local_dir_path)
+
+        if len(dfs) == 0:
+            return None
+
+        df = pd.concat(dfs, ignore_index=True)
 
         return df
 
