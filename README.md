@@ -83,6 +83,9 @@ https://pypi.org/project/pytest-bigquery-mock/
 https://stackoverflow.com/questions/34466027/in-pytest-what-is-the-use-of-conftest-py-files
 https://bradmontgomery.net/blog/how-world-do-you-mock-name-attribute/
 
+https://stackoverflow.com/questions/24705236/how-to-patch-os-mkdir-with-mock
+https://stackoverflow.com/questions/65579240/unittest-mock-pandas-to-csv
+
 A useful tip when figuring out what's going wrong is to have some .py file to experiment. Of course, this file should 
 not be Git-ed
 

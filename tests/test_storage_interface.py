@@ -490,7 +490,7 @@ def test_storage_to_dataframe_no_uris_available(mock_storage, caplog):
         assert records[0].message == f"[STORAGE] Looking at the following uris list :\n []"
 
 
-# @pytest.mark.skip
+@pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
 @mock.patch('gcp_interface.storage_interface.os')
 @pytest.mark.parametrize("local_dir_path, should_exists", [('temp', True), ('temp', True), ('temp__0', True)])
@@ -517,7 +517,7 @@ def test__create_local_directory(mock_os, mock_storage, local_dir_path, should_e
     assert output_dir_path_name == expected_output
     mock_os.mkdir.assert_called_once_with(expected_output)
     mock_os.path.exists.assert_has_calls(calls, any_order=False)
-    # refactoring possibility ?
+
 
 @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
@@ -529,9 +529,27 @@ def test_storage_to_dataframe_via_local(mock_storage):
 
 @pytest.mark.skip
 @mock.patch('gcp_interface.storage_interface.storage')
-def test_dataframe_to_storage(mock_storage):
-    # il y aura du bucket.blob et du blob.upload_from_filename à mock: assert call checks
-    # mock os.mkdir default a tmp path + assert call check
-    # mock shutil.rmtree
-    # https://stackoverflow.com/questions/24705236/how-to-patch-os-mkdir-with-mock
-    pass
+@mock.patch("pandas.DataFrame.to_csv")
+@mock.patch('gcp_interface.storage_interface.shutil')
+@mock.patch('gcp_interface.storage_interface.os')
+def test_dataframe_to_storage(mock_os, mock_shutil, mock_to_csv, mock_storage, mocker):
+    mock_gcs_client = mock_storage.Client.return_value
+    mock_bucket = mock.Mock()
+    mock_blob = mock.Mock()
+    mock_bucket.blob.return_value = mock_blob
+    mock_gcs_client.bucket.return_value = mock_bucket
+    mock_os.path.exists.return_value = False
+    mock_os.path.join.return_value = os.path.join('temp', 'my_data')
+    mocker.patch('gcp_interface.storage_interface.StorageInterface._create_local_directory',
+                 return_value='temp')
+    gs = StorageInterface(project_name="project_name", credentials="credentials")
+    gs.dataframe_to_storage(df=pd.DataFrame({'A': [1, 2], 'B': ['c', 'f']}),
+                            bucket_name='toto',
+                            data_name='my_data',
+                            gs_dir_path='temp')
+    # Using the same name for the _create_local_directory patch and gs_dir_patch for testing convenience.
+    # Method local_to_storage has been tested before
+    mock_to_csv.assert_called_once_with(os.path.join('temp', 'my_data'), index=False)
+    mock_bucket.blob.assert_called_once_with(blob_name=os.path.join('temp', 'my_data'))
+    mock_blob.upload_from_filename.assert_called_once_with(filename=os.path.join('temp', 'my_data'))
+    mock_shutil.rmtree.assert_called_once_with('temp')

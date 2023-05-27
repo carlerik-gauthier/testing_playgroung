@@ -254,7 +254,7 @@ class StorageInterface:
                                        local_dir_path: str = 'temporary'
                                        ) -> pandas.DataFrame:
         # create an empty temporary directory
-        self._create_local_directory(local_dir_path=local_dir_path)
+        local_dir_path = self._create_local_directory(local_dir_path=local_dir_path)
 
         self.storage_to_local(data_prefix=data_name,
                               bucket_name=bucket_name,
