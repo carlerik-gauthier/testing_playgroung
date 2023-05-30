@@ -20,6 +20,9 @@ It's useful for 2 reasons :
     - correcting the tested function or extend its ability to handle unexpected cases
     - correcting the test itself. After all, it is code :) . It might as well be a coding issue as a logical one 
 
+# What next ?
+A next step would be to check the coverage. For that, one may have a look at https://pypi.org/project/pytest-cov/
+
 # Conclusion
 Writing test about data transformation is interesting since it forces to think thoroughly about how it is transformed
 within a given function. As such, a first consequence of this project is that I started to think about lots of weird 
