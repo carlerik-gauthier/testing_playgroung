@@ -118,6 +118,3 @@ https://medium.com/opsops/how-to-get-directory-with-test-from-fixture-in-conftes
 
 Pytest: How to use fixtures as arguments in parametrize
 https://engineeringfordatascience.com/posts/pytest_fixtures_with_parameterize/
-
-
---
